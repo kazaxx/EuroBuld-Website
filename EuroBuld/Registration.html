@@ -4,49 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/styele.css">
-    <title>Document</title>
+    <title>Регистрация</title>
 </head>
 <body>
     <div class="box"><div class="grad-background"></div></div>
+    <div class="falling-icons">
+        <i class="fas fa-hammer"></i>
+        <i class="fas fa-wrench"></i>
+        <i class="fas fa-screwdriver"></i>
+        <i class="fas fa-tools"></i>
+        <i class="fas fa-hammer"></i>
+        <i class="fas fa-wrench"></i>
+        <i class="fas fa-screwdriver"></i>
+        <i class="fas fa-tools"></i>
+        <i class="fas fa-drill"></i>
+        <i class="fas fa-level-up-alt"></i>
+        <i class="fas fa-paint-roller"></i>
+        <i class="fas fa-cogs"></i>
+        <i class="fas fa-gear"></i>
+        <i class="fas fa-hammer"></i>
+        <i class="fas fa-bolt"></i>
+        <i class="fas fa-lightbulb"></i>
+        <i class="fas fa-ruler"></i>
+      </div>
     <div class="desktop-reg"><img class="preview" src="images/fon1.jpg" /></div>
     <div class="frame22">
         <div class="foto"><a href="index.html"><img src="images/Logo2.png" width="400" height="300"></a></div>
         <div class="div22">
-            <div class="heading"><div class="title">Зарегестрируй аккаунт</div></div>
+            <div class="heading"><div class="title">Зарегистрируй аккаунт</div></div>
+            <form id="registerForm">
                 <div class="input-large">
                     <div class="input">
                         <div class="container">
-                            <div class="control"><div class="text">Введите эл. почту</div></div>
+                            <div class="control">
+                                <input type="email" id="email" class="input-field" placeholder="Адрес электронной почты" required />
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="input-large">
                     <div class="input">
                         <div class="container">
-                            <div class="control"><div class="text">Введите пароль</div></div>
+                            <div class="control">
+                                <input type="password" id="password" class="input-field" placeholder="Пароль" required />
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="input-large">
                     <div class="input">
                         <div class="container">
-                            <div class="control"><div class="text">Введите пароль</div></div>
+                            <div class="control">
+                                <input type="password" id="confirmPassword" class="input-field" placeholder="Подтвердите пароль" required />
+                            </div>
                         </div>
                     </div>
                 </div>
-                <button class="button"><div class="label">Войти</div></button>
-                <div class="LABEL-wrapper">
-                    <p class="LABEL">
-                        <span class="text-wrapper">Уже есть аккаунт?</span>
-                        <span class="span">&nbsp;</span>
-                        <a href="Authorization.html"><span class="text-wrapper-4">Войти</span></a>
-                    </p>
-                </div>
+                <button type="submit" class="button"><div class="label">Зарегистрироваться</div></button>
+            </form>
+            <div class="LABEL-wrapper">
+                <p class="LABEL">
+                    <span class="text-wrapper">Уже есть аккаунт?</span>
+                    <span class="span">&nbsp;</span>
+                    <a href="Authorization.html"><span class="text-wrapper-4">Войти</span></a>
+                </p>
+            </div>
         </div>
     </div>
+    
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                alert('Пароли не совпадают');
+                return;
+            }
+
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (response.ok) {
+                alert('Регистрация успешна!');
+                window.location.href = 'Authorization.html';
+            } else {
+                alert('Ошибка регистрации: ' + await response.text());
+            }
+        });
+    </script>
 </body>
+</html>
 <style>
-    @import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.cs");
+    @import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
     * {
         -webkit-font-smoothing: antialiased;
         box-sizing: border-box;
