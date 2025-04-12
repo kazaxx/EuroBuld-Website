@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Админ-панель | Таблицы</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="css/styele.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     * {
       box-sizing: border-box;
@@ -13,270 +14,208 @@
       margin: 0;
       display: flex;
       height: 100vh;
-    }
-
-    .sidebar {
-      width: 200px;
-      background-color: #e4d0d0;
-      padding-top: 20px;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      align-items: center;
-      border-right: 1px solid #ccc;
-    }
-
-    .sidebar div {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-    }
-
-    .sidebar div:hover {
-      font-weight: bold;
-    }
-
-    .main {
-      flex-grow: 1;
-      padding: 20px;
-      background-color: #f4f4f4;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      padding: 10px;
-    }
-
-    .topbar .profile {
-      background-color: #560019;
-      color: white;
-      padding: 8px 15px;
-      border-radius: 50px;
-    }
-
-    .table-wrapper {
-      background-color: white;
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 20px;
-      flex-grow: 1;
-      overflow-y: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
-      text-align: left;
-    }
-
-    th {
-      background-color: transparent;
-      font-weight: bold;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin-top: 20px;
-    }
-
-    .actions button {
-      background-color: #560019;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-weight: bold;
-      cursor: pointer;
+      background-color: #f9f9f9;
     }
   </style>
 </head>
 <body>
   <div class="sidebar">
-    <div onclick="loadTable('users')"><span>👤</span> Клиенты</div>
-    <div onclick="loadTable('staff')"><span>👥</span> Сотрудники</div>
-    <div onclick="loadTable('services')"><span>🛠</span> Услуги</div>
-    <div><span>🔔</span> Заказы</div>
-    <div><span>📊</span> Отчеты</div>
-    <div><span>⚙️</span> Настройки</div>
-  </div>
-
+    <div onclick="loadTable('users')"><i class="fas fa-user"></i> Клиенты</div>
+    <div onclick="loadTable('staff')"><i class="fas fa-users"></i> Сотрудники</div>
+    <div onclick="loadTable('service')"><i class="fas fa-tools"></i> Услуги</div>
+    <div onclick="loadTable('role')"><i class="fas fa-user-tag"></i> Роли</div>
+    <div onclick="loadTable('customer_orders')"><i class="fas fa-box"></i> Заказы</div>
+    <div onclick="loadTable('processed_customer_orders')"><i class="fas fa-check-circle"></i> Обработанные</div>
+    <div onclick="loadTable('requests')"><i class="fas fa-envelope"></i> Заявки</div>
+    <div onclick="loadTable('foremen')"><i class="fas fa-hard-hat"></i> Начальники</div>
+    <div onclick="loadTable('status_orders')"><i class="fas fa-tasks"></i> Статусы</div>
+    <div><i class="fas fa-chart-bar"></i> Отчёты</div>
+    <div><i class="fas fa-cog"></i> Настройки</div>
+  </div>  
   <div class="main">
     <div class="topbar">
       <div class="profile">Профиль</div>
     </div>
-
     <div class="table-wrapper" id="tableContainer"></div>
-
     <div class="actions">
-        <button onclick="openModal('add')">Добавить</button>
-        <button onclick="openModal('edit')">Изменить</button>
-        <button onclick="deleteRecord()">Удалить</button>
-    </div>  
+      <button onclick="openModal('add')">Добавить</button>
+      <button onclick="openModal('edit')">Изменить</button>
+      <button onclick="deleteRecord()">Удалить</button>
+    </div>
   </div>
 
-<!-- Добавляем в body перед </body> -->
-
-<!-- Модальное окно -->
-<div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-     background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
-  <div style="background:#fff; padding:20px; border-radius:10px; width:300px;">
-    <h3 id="modalTitle">Добавить запись</h3>
-    <form id="modalForm">
-      <div id="formFields"></div>
-      <input type="hidden" name="id" id="recordId">
-      <div style="text-align:right; margin-top:10px;">
-        <button type="submit">Сохранить</button>
-        <button type="button" onclick="closeModal()">Отмена</button>
-      </div>
-    </form>
+  <!-- Улучшенное модальное окно -->
+  <div id="modal">
+    <div id="modalContent">
+      <h3 id="modalTitle">Добавить запись</h3>
+      <form id="modalForm">
+        <div id="formFields"></div>
+        <input type="hidden" name="id" id="recordId">
+        <div class="modal-actions">
+          <button type="submit" class="save">Сохранить</button>
+          <button type="button" class="cancel" onclick="closeModal()">Отмена</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
-<script>
-  let currentTable = 'users';
-  let tableData = [];
+  <script>
+    let currentTable = 'users';
+    let tableData = [];
+    let rolesData = [];
 
-  async function loadTable(type) {
-    currentTable = type;
-    let url = `/api/${type}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    tableData = data;
-
-    if (!Array.isArray(data) || data.length === 0) {
-      document.getElementById('tableContainer').innerHTML = '<p>Нет данных</p>';
-      return;
+    async function loadRoles() {
+      const res = await fetch('/api/role');
+      rolesData = await res.json();
     }
+    loadRoles();
 
-    let html = '<table><thead><tr>';
-    for (let key in data[0]) {
-      html += `<th>${key}</th>`;
-    }
-    html += '</tr></thead><tbody>';
+    async function loadTable(type) {
+      currentTable = type;
+      let url = `/api/${type}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      tableData = data;
 
-    for (let row of data) {
-      html += `<tr onclick="selectRow(this)">`;
-      for (let key in row) {
-        html += `<td>${row[key]}</td>`;
+      if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById('tableContainer').innerHTML = '<p>Нет данных</p>';
+        return;
       }
-      html += '</tr>';
+
+      let html = '<table><thead><tr>';
+      for (let key in data[0]) {
+        html += `<th>${key}</th>`;
+      }
+      html += '</tr></thead><tbody>';
+
+      for (let row of data) {
+        html += '<tr onclick="selectRow(this)">';
+        for (let key in row) {
+          if (key === 'ImageBase64') {
+            html += `<td><img src="data:image/jpeg;base64,${row[key]}" alt="Image" style="width:100px;height:auto;"/></td>`;
+          } else {
+            html += `<td>${row[key]}</td>`;
+          }
+        }
+        html += '</tr>';
+      }
+
+      html += '</tbody></table>';
+      document.getElementById('tableContainer').innerHTML = html;
     }
 
-    html += '</tbody></table>';
-    document.getElementById('tableContainer').innerHTML = html;
-  }
-
-  function selectRow(row) {
-    document.querySelectorAll('tr').forEach(r => r.style.backgroundColor = '');
-    row.style.backgroundColor = '#ffe0e0';
-    row.setAttribute('data-selected', 'true');
-  }
-
-  function getSelectedRowData() {
-    const selected = document.querySelector('tr[data-selected="true"]');
-    if (!selected) return null;
-
-    const values = [...selected.children].map(td => td.textContent);
-    const keys = Object.keys(tableData[0]);
-
-    return Object.fromEntries(keys.map((k, i) => [k, values[i]]));
-  }
-
-  function addRow() {
-  openModal('add');
-}
-
-function editRow() {
-  openModal('edit');
-}
-
-function deleteRow() {
-  deleteRecord();
-}
-
-
-function openModal(mode) {
-  console.log('Открытие модального окна в режиме:', mode);
-  const modal = document.getElementById('modal');
-  const formFields = document.getElementById('formFields');
-  const modalTitle = document.getElementById('modalTitle');
-  formFields.innerHTML = '';
-
-  let data = mode === 'edit' ? getSelectedRowData() : {};
-  console.log('Данные для модального окна:', data);
-  if (mode === 'edit' && !data) return alert('Выберите строку для изменения.');
-
-  modalTitle.textContent = mode === 'edit' ? 'Изменить запись' : 'Добавить запись';
-
-  for (let key in tableData[0]) {
-    if (key.toLowerCase().includes('id')) continue;
-    formFields.innerHTML += `
-      <div>
-        <label>${key}</label>
-        <input name="${key}" value="${data?.[key] || ''}" required />
-      </div>
-    `;
-  }
-
-  document.getElementById('recordId').value = data?.[Object.keys(data)[0]] || '';
-  modal.style.display = 'flex';
-}
-
-
-  function closeModal() {
-    document.getElementById('modal').style.display = 'none';
-  }
-
-  document.getElementById('modalForm').addEventListener('submit', async e => {
-    e.preventDefault();
-
-    const form = e.target;
-    const data = {};
-    for (let input of form.querySelectorAll('input[name]')) {
-      data[input.name] = input.value;
+    function selectRow(row) {
+      document.querySelectorAll('tr').forEach(r => r.style.backgroundColor = '');
+      row.style.backgroundColor = '#ffe0e0';
+      row.setAttribute('data-selected', 'true');
     }
 
-    const id = form.querySelector('#recordId').value;
+    function getSelectedRowData() {
+      const selected = document.querySelector('tr[data-selected="true"]');
+      if (!selected) return null;
+      const values = [...selected.children].map(td => td.textContent);
+      const keys = Object.keys(tableData[0]);
+      return Object.fromEntries(keys.map((k, i) => [k, values[i]]));
+    }
 
-    const method = id ? 'PUT' : 'POST';
-    const url = `/api/${currentTable}${id ? '/' + id : ''}`;
-    await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+    function openModal(mode) {
+      const modal = document.getElementById('modal');
+      const formFields = document.getElementById('formFields');
+      const modalTitle = document.getElementById('modalTitle');
+      formFields.innerHTML = '';
+
+      let data = mode === 'edit' ? getSelectedRowData() : {};
+      if (mode === 'edit' && !data) {
+        return alert('Выберите строку для изменения.');
+      }
+
+      modalTitle.textContent = mode === 'edit' ? 'Изменить запись' : 'Добавить запись';
+
+      if (currentTable === 'staff') {
+        let currentRoleId = data && data.ID_Role ? data.ID_Role : '';
+        let optionsHtml = rolesData.map(role =>
+          `<option value="${role.ID_Role}" ${role.ID_Role == currentRoleId ? 'selected' : ''}>${role.roll_name}</option>`
+        ).join('');
+
+        formFields.innerHTML += `
+          <div class="modal-field">
+            <label>Роль</label>
+            <select name="ID_Role" required>
+              ${optionsHtml}
+            </select>
+          </div>
+        `;
+
+        for (let key in tableData[0]) {
+          if (['ID_Staff', 'ID_Role', 'roll_name'].includes(key)) continue;
+          formFields.innerHTML += `
+            <div class="modal-field">
+              <label>${key}</label>
+              <input name="${key}" value="${data?.[key] || ''}" required />
+            </div>
+          `;
+        }
+      } else {
+        for (let key in tableData[0]) {
+          if (key.toLowerCase().includes('id')) continue;
+          formFields.innerHTML += `
+            <div class="modal-field">
+              <label>${key}</label>
+              <input name="${key}" value="${data?.[key] || ''}" required />
+            </div>
+          `;
+        }
+      }
+
+      document.getElementById('recordId').value = data?.[Object.keys(data)[0]] || '';
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    document.getElementById('modalForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {};
+      for (let input of form.querySelectorAll('input[name], select[name]')) {
+        data[input.name] = input.value;
+      }
+      const id = form.querySelector('#recordId').value;
+      const method = id ? 'PUT' : 'POST';
+      const url = `/api/${currentTable}${id ? '/' + id : ''}`;
+      try {
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (response.ok) {
+          alert('Запись добавлена!');
+          closeModal();
+          loadTable(currentTable);
+        } else {
+          const error = await response.text();
+          alert(`Ошибка: ${error}`);
+        }
+      } catch (error) {
+        console.error('Ошибка при отправке данных:', error);
+        alert('Произошла ошибка при добавлении записи.');
+      }
     });
 
-    closeModal();
-    loadTable(currentTable);
-  });
+    async function deleteRecord() {
+      const data = getSelectedRowData();
+      if (!data) return alert('Выберите строку для удаления');
+      const id = Object.values(data)[0];
+      const confirmed = confirm('Удалить выбранную запись?');
+      if (!confirmed) return;
+      await fetch(`/api/${currentTable}/${id}`, { method: 'DELETE' });
+      loadTable(currentTable);
+    }
 
-  async function deleteRecord() {
-    const data = getSelectedRowData();
-    if (!data) return alert('Выберите строку для удаления');
-
-    const id = Object.values(data)[0];
-    const confirmed = confirm('Удалить выбранную запись?');
-    if (!confirmed) return;
-
-    await fetch(`/api/${currentTable}/${id}`, { method: 'DELETE' });
-    loadTable(currentTable);
-  }
-
-  loadTable('users');
-</script>
-
+    loadTable('users');
+  </script>
 </body>
 </html>
