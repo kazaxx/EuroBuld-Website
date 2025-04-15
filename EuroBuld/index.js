@@ -481,6 +481,21 @@ app.delete('/api/:table/:id', async (req, res) => {
   }
 });
 
+app.get('/api/service', async (req, res) => {
+  try {
+    const pool = await mssql.connect(sqlConfig);
+    const result = await pool.request().query(`
+      SELECT ID_Service, Item_Name, Item_Description, Price,
+        CAST('' AS XML).value('xs:base64Binary(xs:hexBinary(sql:column("Image")))', 'VARCHAR(MAX)') AS ImageBase64
+      FROM Service
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Ошибка при получении services:', err);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

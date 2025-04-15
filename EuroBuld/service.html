@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Услуги</title>
+  <link rel="stylesheet" href="css/styele.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="left-wrapper">
+      <div class="left-menu">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="" class="nav-link-2">Услуги</a>
+        <a href="#" class="nav-link">О нас</a>
+        <a href="#" class="nav-link">Контакты</a>
+      </div>
+      <img src="images/Screenshot_2.png" class="poloska" width="440" height="7">
+    </div>
+  
+    <div class="right-menu">
+      <button class="auth-btn">Вход</button>
+      <button class="auth-btn-2">Регистрация</button>
+    </div>
+  </header>  
+  <div class="search-container">
+    <input type="text" id="searchInput" class="search-input" placeholder="Поиск товара..." oninput="searchProducts()">
+  </div>  
+  <div id="services" class="services-container"></div>
+<script>
+  let allServices = []; 
+
+  async function fetchServices() {
+    try {
+      const response = await fetch('/api/service');
+      const services = await response.json();
+      allServices = services;  
+      displayServices(services); 
+    } catch (error) {
+      console.error('Ошибка при загрузке услуг:', error);
+    }
+  }
+
+  function displayServices(services) {
+    const container = document.getElementById('services');
+    container.innerHTML = ''; 
+    services.forEach(service => {
+      const card = document.createElement('div');
+      card.className = 'service-card-custom';
+
+      card.innerHTML = `
+        <img src="data:image/jpeg;base64,${service.ImageBase64}" alt="${service.Item_Name}">
+        <h3>${service.Item_Name}</h3>
+        <div class="price">${service.Price}</div>
+        <button class="details-btn">Подробнее</button>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
+  function searchProducts() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const filteredServices = allServices.filter(service => 
+      service.Item_Name.toLowerCase().includes(query)
+    );
+    
+    displayServices(filteredServices);
+  }
+  fetchServices(); 
+</script>
+</body>
+</html>
