@@ -11,7 +11,7 @@
     <div class="left-wrapper">
       <div class="left-menu">
         <a href="index.html" class="nav-link">Главная</a>
-        <a href="" class="nav-link-2">Услуги</a>
+        <a href="services.html" class="nav-link-2">Услуги</a>
         <a href="#" class="nav-link">О нас</a>
         <a href="#" class="nav-link">Контакты</a>
       </div>
@@ -23,10 +23,13 @@
       <button class="auth-btn-2">Регистрация</button>
     </div>
   </header>  
+
   <div class="search-container">
     <input type="text" id="searchInput" class="search-input" placeholder="Поиск товара..." oninput="searchProducts()">
   </div>  
+
   <div id="services" class="services-container"></div>
+
 <script>
   let allServices = []; 
 
@@ -47,16 +50,19 @@
     services.forEach(service => {
       const card = document.createElement('div');
       card.className = 'service-card-custom';
-
       card.innerHTML = `
         <img src="data:image/jpeg;base64,${service.ImageBase64}" alt="${service.Item_Name}">
         <h3>${service.Item_Name}</h3>
         <div class="price">${service.Price}</div>
-        <button class="details-btn">Подробнее</button>
+        <button class="details-btn" onclick="openProduct(${service.ID_Service})">Подробнее</button>
       `;
-
       container.appendChild(card);
     });
+  }
+
+  function openProduct(id) {
+    // Переход на страницу подробного отображения товара. Можно использовать query-параметр.
+    window.location.href = `product.html?id=${id}`;
   }
 
   function searchProducts() {
@@ -64,9 +70,9 @@
     const filteredServices = allServices.filter(service => 
       service.Item_Name.toLowerCase().includes(query)
     );
-    
     displayServices(filteredServices);
   }
+  
   fetchServices(); 
 </script>
 </body>

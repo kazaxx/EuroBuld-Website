@@ -1121,3 +1121,151 @@
         grid-template-columns: repeat(2, 1fr); 
       }
     }
+
+    .wrapper {
+      display: flex;
+      justify-content: flex-start;
+      padding: 40px 20px;
+    }
+
+    .product-container {
+      max-width: 1200px;
+      margin-left: 400px;
+      padding: 30px;
+      display: flex;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-card {
+      display: flex;
+      flex-direction: row;
+      gap: 40px;
+      width: 100%;
+    }
+
+    .image-wrapper img {
+      width: 600px;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      object-fit: cover;
+    }
+
+    .info-wrapper {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 20px;
+      padding-top: 10px;
+    }
+
+    .info-wrapper h2 {
+      font-size: 32px;
+      margin: 0;
+      font-family: "DM Sans-Bold", Helvetica;
+      font-weight: bold;
+      color: #430113;
+    }
+
+    .info-wrapper p {
+      font-size: 20px;
+      color: #430113;
+      font-family: "DM Sans-Bold", Helvetica;
+      font-weight: bold;
+      line-height: 1.6;
+    }
+
+    .price {
+      font-size: 24px;
+      font-weight: bold;
+      font-family: "DM Sans-Bold", Helvetica;
+      color: #430113;
+    }
+
+    .buy-btn {
+      margin-top: 120px;
+      padding: 7px 150px;
+      font-size: 18px;
+      border: none;
+      border-radius: 12px;
+      background-color: #430113;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      align-self: start;
+    }
+
+    .recommended-container {
+      margin-top: 50px;
+      padding: 20px 0;
+      display: flex;
+      gap: 20px;
+      overflow-x: scroll;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      justify-content: center;
+    }
+
+    .recommended-card {
+      flex: 0 0 auto;
+      width: 300px;
+      border: 2px solid #ccc;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      background: #fff;
+      text-align: center;
+      padding: 10px;
+      scroll-snap-align: start;
+    }
+
+    .recommended-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .recommended-card h3 {
+      font-size: 20px;
+      margin-top: 10px;
+      color: #333;
+    }
+
+    .recommended-card .price {
+      font-size: 18px;
+      color: #430113;
+      margin-top: 5px;
+    }
+
+    .recommended-card .details-btn {
+      margin-top: 10px;
+      padding: 8px 20px;
+      background-color: #430113;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .swipe-buttons {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0;
+      transform: translateY(-50%);
+    }
+
+    .swipe-btn {
+      background-color: #430113;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 0 90px;
+    }

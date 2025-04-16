@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+  <link rel="stylesheet" href="css/styele.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="left-wrapper">
+      <div class="left-menu">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="service.html" class="nav-link-2">Услуги</a>
+        <a href="#" class="nav-link">О нас</a>
+        <a href="#" class="nav-link">Контакты</a>
+      </div>
+      <img src="images/Screenshot_2.png" class="poloska" width="440" height="7">
+    </div>
+  
+    <div class="right-menu">
+      <button class="auth-btn">Вход</button>
+      <button class="auth-btn-2">Регистрация</button>
+    </div>
+  </header>  
+
+  <div class="wrapper">
+    <div id="product-container" class="product-container"></div>
+  </div>
+
+  <div class="recommended-container" id="recommended">
+  </div>
+
+  <div class="swipe-buttons">
+    <button class="swipe-btn" id="prevBtn">←</button>
+    <button class="swipe-btn" id="nextBtn">→</button>
+  </div>
+
+<script>
+  function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+
+  async function fetchProductById(id) {
+    try {
+      const response = await fetch(`/api/service/${id}`);
+      if (!response.ok) {
+        throw new Error('Ошибка при получении данных о товаре');
+      }
+      const product = await response.json();
+      displayProduct(product);
+      fetchRecommendedServices(); // Загружаем рекомендованные товары
+    } catch (error) {
+      console.error('Ошибка:', error);
+      document.getElementById('product-container').innerHTML = '<p>Не удалось загрузить данные о товаре.</p>';
+    }
+  }
+
+  function displayProduct(product) {
+    const container = document.getElementById('product-container');
+    container.innerHTML = `
+      <div class="product-card">
+        <div class="image-wrapper">
+          <img src="data:image/jpeg;base64,${product.ImageBase64}" alt="${product.Item_Name}">
+        </div>
+        <div class="info-wrapper">
+          <h2>${product.Item_Name}</h2>
+          <div class="price">${product.Price}</div>
+          <p>${product.Item_Description}</p>
+          <button class="buy-btn">Купить</button>
+        </div>
+      </div>
+    `;
+    
+    document.title = `${product.Item_Name}`;
+  }
+
+
+  async function fetchRecommendedServices() {
+    try {
+      const response = await fetch('/api/service');
+      const services = await response.json();
+      displayRecommendedServices(services.slice(0, 5));
+    } catch (error) {
+      console.error('Ошибка при загрузке рекомендованных товаров:', error);
+    }
+  }
+
+  function displayRecommendedServices(services) {
+    const container = document.getElementById('recommended');
+    container.innerHTML = '';
+    services.forEach(service => {
+      const card = document.createElement('div');
+      card.className = 'recommended-card';
+      card.innerHTML = `
+        <img src="data:image/jpeg;base64,${service.ImageBase64}" alt="${service.Item_Name}">
+        <h3>${service.Item_Name}</h3>
+        <div class="price">${service.Price}</div>
+        <button class="details-btn" onclick="openProduct(${service.ID_Service})">Подробнее</button>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function openProduct(id) {
+    window.location.href = `product.html?id=${id}`;
+  }
+
+  let scrollAmount = 0;
+  const recommendedContainer = document.getElementById('recommended');
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    scrollAmount -= 300;
+    if (scrollAmount < 0) scrollAmount = 0;
+    recommendedContainer.scrollTo({
+      left: scrollAmount,
+      behavior: 'smooth'
+    });
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    scrollAmount += 300;
+    recommendedContainer.scrollTo({
+      left: scrollAmount,
+      behavior: 'smooth'
+    });
+  });
+
+  const productId = getQueryParam('id');
+  if (productId) {
+    fetchProductById(productId);
+  } else {
+    document.getElementById('product-container').innerHTML = '<p>Товар не найден.</p>';
+  }
+</script>
+</body>
+</html>
