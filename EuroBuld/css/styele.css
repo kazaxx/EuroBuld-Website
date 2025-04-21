@@ -1736,4 +1736,34 @@
         padding: 10px;
       }
     }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    
+    .remember-me input {
+      margin-right: 8px;
+    }
+    
+    .user-profile {
+      display: flex;
+      align-items: center;
+    }
+    
+    .user-profile a {
+      font-family: "DM Sans-Bold", Helvetica;
+      font-weight: bold;
+      color: #4c0c18;
+      font-size: 25px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    
+    .user-profile a:hover {
+      background-color: #f0f0f0;
+    }
     

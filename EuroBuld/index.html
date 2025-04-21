@@ -35,14 +35,34 @@
                 </div>
                 <div class="bottom-content"><img class="line" src="images/Screenshot_2.png" /></div>
               </div>
-              <div class="right-content">
+              <div class="right-content" id="authButtons">
                 <a href="Authorization.html" class="div-wrapper"><div class="text-wrapper-3">Войти</div></a>
                 <a href="Registration.html"><div class="text-wrapper-4">Регистрация</div></a>
+              </div>
+              
+              <div class="user-profile" id="userProfile" style="display: none;">
+                <a href="personalacount.html" id="userEmail"></a>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', async function() {
+        const authCheck = await fetch('/api/check_auth', {
+          credentials: 'include'
+        });
+        const authData = await authCheck.json();
+        
+        if (authData.isAuth) {
+          // Показываем email пользователя вместо кнопок
+          document.getElementById('authButtons').style.display = 'none';
+          document.getElementById('userProfile').style.display = 'block';
+          document.getElementById('userEmail').textContent = authData.email;
+          document.getElementById('userEmail').href = 'personalacount.html';
+        }
+      });
+    </script>
   </body>
 </html>

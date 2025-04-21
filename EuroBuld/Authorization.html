@@ -77,7 +77,6 @@
                     },
                     body: JSON.stringify({ email, password })
                 });
-        
                 if (response.ok) {
                     const role = await response.text();
         
@@ -92,6 +91,51 @@
                     const errorMessage = await response.text();
                     alert('Ошибка авторизации: ' + errorMessage); 
                 }
+            });
+            ddocument.addEventListener('DOMContentLoaded', async function() {
+ 
+            const authCheck = await fetch('/api/check_auth', {
+                credentials: 'include'
+            });
+            const authData = await authCheck.json();
+            
+            if (authData.isAuth) {
+                window.location.href = 'personalacount.html';
+            } else if (authData.rememberEmail) {
+                document.getElementById('email').value = authData.rememberEmail;
+                document.getElementById('password').focus();
+            }
+        
+            document.getElementById('registerForm').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ email, password })
+                });
+                
+                if (response.ok) {
+                const role = await response.text();
+                
+                if (role === 'Admin') {
+                    window.location.href = 'Аdmin_dashboard.html'; 
+                } else if (role === 'Manager') {
+                    window.location.href = 'manager_dashboard.html'; 
+                } else {
+                    window.location.href = 'personalacount.html'; 
+                }
+                } else {
+                const errorMessage = await response.text();
+                alert('Ошибка авторизации: ' + errorMessage); 
+                }
+            });
             });
         </script>         
     </body>

@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const Joi = require('joi');
 const path = require('path'); // Подключение модуля path
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 
@@ -14,6 +15,8 @@ const port = 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cookieParser());
+
 
 // Настроим сессии
 app.use(session({
@@ -163,6 +166,7 @@ mssql.connect(sqlConfig)
   });
 
 // Авторизация по роли
+// Авторизация по роли
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -187,6 +191,12 @@ app.post('/login', async (req, res) => {
 
       req.session.userId = staff.ID_Staff;
       req.session.role = staff.roll_name;
+      
+      // Всегда устанавливаем куку на 30 дней
+      res.cookie('rememberUser', email, { 
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
+        httpOnly: true 
+      });
 
       if (staff.roll_name === 'Admin') {
           return res.status(200).send('Admin');
@@ -210,14 +220,87 @@ app.post('/login', async (req, res) => {
           return res.status(400).send('Неверный пароль');
       }
 
-      // Сохраняем userId в сессии для обычного пользователя
       req.session.userId = user.ID_Users;
+      
+      // Всегда устанавливаем куку на 30 дней
+      res.cookie('rememberUser', email, { 
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
+        httpOnly: true 
+      });
+      
       return res.status(200).send('User');
     }
   } catch (error) {
     console.error('Ошибка сервера:', error);
     res.status(500).send('Ошибка сервера');
   }
+});
+
+// Проверка авторизации пользователя
+app.get('/api/check_auth', async (req, res) => {
+  if (req.session.userId) {
+    try {
+      // Проверяем, является ли пользователь сотрудником
+      let result = await app.locals.db.request()
+        .input('userId', mssql.Int, req.session.userId)
+        .query(`
+          SELECT s.*, r.roll_name
+          FROM Staff s
+          LEFT JOIN Role r ON s.ID_Role = r.ID_Role
+          WHERE s.ID_Staff = @userId
+        `);
+
+      if (result.recordset.length > 0) {
+        const staff = result.recordset[0];
+        return res.json({
+          isAuth: true,
+          email: staff.Email,
+          role: staff.roll_name
+        });
+      } else {
+        // Если не сотрудник, проверяем обычных пользователей
+        result = await app.locals.db.request()
+          .input('userId', mssql.Int, req.session.userId)
+          .query('SELECT Email FROM Users WHERE ID_Users = @userId');
+
+        if (result.recordset.length > 0) {
+          return res.json({
+            isAuth: true,
+            email: result.recordset[0].Email,
+            role: 'User'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка при проверке авторизации:', error);
+    }
+  }
+  
+  // Проверяем куку rememberUser
+  if (req.cookies.rememberUser) {
+    return res.json({
+      isAuth: false,
+      rememberEmail: req.cookies.rememberUser
+    });
+  }
+  
+  return res.json({ isAuth: false });
+});
+
+// Выход из системы
+app.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Ошибка при выходе:', err);
+      return res.status(500).send('Ошибка при выходе');
+    }
+    
+    // Удаляем куку rememberUser
+    res.clearCookie('rememberUser');
+    res.clearCookie('connect.sid'); // Удаляем куку сессии
+    
+    res.status(200).send('Успешный выход');
+  });
 });
 
 // Пример использования userId в других маршрутах

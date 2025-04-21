@@ -31,6 +31,7 @@
     <div class="menu-inner">
       <a href="" id="orders-link"><i class="fas fa-box"></i>Заказы</a>
       <a href="" id="profile-link"><i class="fas fa-user"></i>Профиль</a>
+      <a href="" id="logoutButton"><i class="fas fa-user"></i>Выйти из аккаунта</a>
     </div>
   </aside>
   
@@ -62,6 +63,18 @@
   </div>
 
   <script>
+    document.getElementById('logoutButton').addEventListener('click', async function() {
+          const response = await fetch('/logout', {
+            method: 'POST',
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            window.location.href = 'index.html';
+          } else {
+            alert('Ошибка при выходе');
+          }
+        });
     document.getElementById('toggle-password').addEventListener('click', function () {
           const passwordInput = document.getElementById('password');
           const type = passwordInput.type === 'password' ? 'text' : 'password';
