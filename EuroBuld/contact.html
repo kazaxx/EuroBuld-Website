@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Контакты</title>
+  <link rel="stylesheet" href="css/styele.css" />
+  <body class="contact-page">
+    <header class="navbar">
+      <div class="left-wrapper">
+        <div class="left-menu">
+          <a href="index.html" class="nav-link">Главная</a>
+          <a href="services.html" class="nav-link">Услуги</a>
+          <a href="AboutUs.html" class="nav-link">О нас</a>
+          <a href="" class="nav-link-2">Контакты</a>
+        </div>
+        <img src="images/Screenshot_2.png" class="poloska" width="440" height="7">
+      </div>
+    </header>
+  
+    <main class="contact-main">
+      <div class="contact-form-container">
+        <h1>Оставить заявку</h1>
+        <form id="request-form" class="contact-form">
+          <label>Выберите услугу:
+            <select name="ID_Service" id="service-select" required></select>
+          </label>
+          <label>Имя:
+            <input type="text" name="First_name" required>
+          </label>
+          <label>Фамилия:
+            <input type="text" name="Last_name" required>
+          </label>
+          <label>Email:
+            <input type="email" name="Email" required>
+          </label>
+          <label>Дополнительная информация:
+            <textarea name="Additional_Info" rows="4"></textarea>
+          </label>
+          <button type="submitcontact" id="send-request-btn" class="contact-submit-btn">Отправить</button>
+        </form>
+        <p id="response-message" class="contact-response-message"></p>
+      </div>
+  
+      <div class="contact-map-container">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2436.403376332695!2d37.617635815882014!3d55.75582698055247!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x414ab4453ad21e8f%3A0x9b4d8c9d8d643c7c!2z0JzQvtC70YzRiNC60LAg0KLRg9GA0YPQsNC00YHQutC40Lkg0YHQv9C10LrRgdCw!5e0!3m2!1sru!2sru!4v1617092624024!5m2!1sru!2sru"
+          allowfullscreen=""
+          loading="lazy">
+        </iframe>
+      </div>
+    </main>
+  <script>
+    fetch('/api/service')
+      .then(res => res.json())
+      .then(data => {
+        const select = document.getElementById('service-select');
+        data.forEach(service => {
+          const option = document.createElement('option');
+          option.value = service.ID_Service;
+          option.textContent = service.Item_Name;
+          select.appendChild(option);
+        });
+      });
+  
+    document.getElementById('send-request-btn').addEventListener('click', async (e) => {
+      e.preventDefault();
+  
+      const form = document.getElementById('request-form');
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+  
+      try {
+        const response = await fetch('/api/requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+  
+        const result = await response.json();
+  
+        if (response.ok) {
+          alert('Заявка успешно отправлена! Наши сотрудники ответят вам на почту.');
+          form.reset();
+        } else {
+          alert('Ошибка: ' + result.message);
+        }
+      } catch (err) {
+        alert('Ошибка при отправке заявки.');
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

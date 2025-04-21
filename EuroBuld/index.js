@@ -75,7 +75,7 @@ const validationSchemas = {
     Date_employment: Joi.date().required().messages({
       'date.base': 'Неверный формат даты приёма на работу',
       'any.required': 'Дата приёма обязательна'
-    })
+    }),
   }),
 };
 
@@ -698,6 +698,30 @@ app.put('/api/update_user', async (req, res) => {
   } catch (err) {
     console.error('Ошибка при обновлении пользователя:', err);
     res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+app.post('/api/requests', async (req, res) => {
+  const { error, value } = requestSchema.validate(req.body);
+  if (error) return res.status(400).json({ message: error.details[0].message });
+
+  const { ID_Service, First_name, Last_name, Email, Additional_Info } = value;
+
+  try {
+    await pool.request()
+      .input('ID_Service', ID_Service)
+      .input('First_name', First_name)
+      .input('Last_name', Last_name)
+      .input('Email', Email)
+      .input('Additional_Info', Additional_Info || '')
+      .query(`
+        INSERT INTO Requests (ID_Service, First_name, Last_name, Email, Additional_Info)
+        VALUES (@ID_Service, @First_name, @Last_name, @Email, @Additional_Info)
+      `);
+    res.status(201).json({ message: 'Заявка успешно создана' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Ошибка при создании заявки' });
   }
 });
 
