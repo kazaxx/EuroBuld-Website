@@ -1,4 +1,5 @@
 const express = require('express');
+const session = require('express-session');
 const mssql = require('mssql');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
@@ -9,6 +10,18 @@ dotenv.config();
 
 const app = express();
 const port = 3000;
+
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+// Настроим сессии
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }  // установите secure: true, если используете HTTPS
+}));
 
 const validationSchemas = {
   users: Joi.object({
@@ -149,7 +162,7 @@ mssql.connect(sqlConfig)
     console.error('Database connection failed:', err);
   });
 
-//Авторизация по ролли
+// Авторизация по роли
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -157,15 +170,13 @@ app.post('/login', async (req, res) => {
 
   try {
     let result = await pool.request()
-        .input('Email', mssql.VarChar, email)
-        .query(`
-          SELECT s.*, r.roll_name
-          FROM Staff s
-          LEFT JOIN Role r ON s.ID_Role = r.ID_Role
-          WHERE s.Email = @Email
-        `);
-
-    console.log("Staff Query Result: ", result.recordset); 
+      .input('Email', mssql.VarChar, email)
+      .query(`
+        SELECT s.*, r.roll_name
+        FROM Staff s
+        LEFT JOIN Role r ON s.ID_Role = r.ID_Role
+        WHERE s.Email = @Email
+      `);
 
     if (result.recordset.length > 0) {
       const staff = result.recordset[0];
@@ -173,6 +184,9 @@ app.post('/login', async (req, res) => {
       if (staff.Password !== password) {
           return res.status(400).send('Неверный пароль');
       }
+
+      req.session.userId = staff.ID_Staff;
+      req.session.role = staff.roll_name;
 
       if (staff.roll_name === 'Admin') {
           return res.status(200).send('Admin');
@@ -182,12 +196,9 @@ app.post('/login', async (req, res) => {
           return res.status(200).send('Employee');
       }
     } else {
-
       result = await pool.request()
-          .input('Email', mssql.VarChar, email)
-          .query('SELECT * FROM Users WHERE Email = @Email');
-
-      console.log("Users Query Result: ", result.recordset);
+        .input('Email', mssql.VarChar, email)
+        .query('SELECT * FROM Users WHERE Email = @Email');
 
       if (result.recordset.length === 0) {
           return res.status(400).send('Пользователь не найден');
@@ -199,12 +210,25 @@ app.post('/login', async (req, res) => {
           return res.status(400).send('Неверный пароль');
       }
 
+      // Сохраняем userId в сессии для обычного пользователя
+      req.session.userId = user.ID_Users;
       return res.status(200).send('User');
     }
   } catch (error) {
-    console.error('Database error:', error);
+    console.error('Ошибка сервера:', error);
     res.status(500).send('Ошибка сервера');
   }
+});
+
+// Пример использования userId в других маршрутах
+app.get('/profile', (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).send('Пожалуйста, войдите в систему');
+  }
+
+  const userId = req.session.userId;
+
+  res.send(`Добро пожаловать, пользователь с ID: ${userId}`);
 });
 
 //Выборка таблицы users в datagrid(админ панель)
@@ -497,7 +521,7 @@ app.get('/api/service', async (req, res) => {
   }
 });
 
-// Endpoint для получения данных одного товара по его ID
+//Запрос для вывода данных услуги в личный кабинет
 app.get('/api/service/:id', async (req, res) => {
   const serviceId = req.params.id;
   try {
@@ -523,6 +547,157 @@ app.get('/api/service/:id', async (req, res) => {
   } catch (err) {
     console.error('Ошибка при получении данных товара:', err);
     res.status(500).send('Ошибка сервера');
+  }
+});
+
+//Вывод заказов пользователя в личный кабинет
+app.get('/api/user_orders/:userId', async (req, res) => {
+  const userId = req.session.userId;
+  if (!userId) {
+    return res.status(401).send('Пожалуйста, войдите в систему');
+  }
+
+
+  try {
+    const result = await app.locals.db.request()
+      .input('userId', mssql.Int, userId)
+      .query(`
+        SELECT 
+          pco.ID_Processed_customer_orders AS OrderID,
+          pco.Date_Start AS OrderDate,
+          pco.Date_Ending AS DateEnding,
+          pco.Final_sum AS FinalSum,
+          so.Name_Status AS Status,
+          s.Item_Name AS Service
+        FROM Processed_customer_orders pco
+        INNER JOIN Customer_orders co ON pco.ID_Customer_orders = co.ID_Customers_orders
+        INNER JOIN Service s ON co.ID_Service = s.ID_Service
+        INNER JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+        WHERE co.ID_Users = @userId
+      `);
+
+    console.log('Сырые данные из запроса:', result.recordset);
+
+    if (result.recordset.length === 0) {
+      console.log(`Заказы для пользователя с ID ${userId} не найдены`);
+      return res.json({ message: 'Заказы не найдены для данного пользователя.' });
+    }
+
+    const grouped = {};
+    result.recordset.forEach(row => {
+      const id = row.OrderID;
+      if (!grouped[id]) {
+        grouped[id] = {
+          OrderID: row.OrderID,
+          OrderDate: row.OrderDate,
+          DateEnding: row.DateEnding,
+          FinalSum: row.FinalSum,
+          Status: row.Status,
+          Items: []
+        };
+      }
+      if (row.Service && !grouped[id].Items.includes(row.Service)) {
+        grouped[id].Items.push(row.Service);
+      }
+    });
+
+    res.json(Object.values(grouped));
+
+  } catch (err) {
+    console.error('Ошибка при получении заказов пользователя:', err);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+//Получить id авторизовавшего пользователя
+app.get('/api/get_userId', (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).send({ message: 'Пользователь не авторизован' });
+  }
+  res.json({ userId: req.session.userId });
+});
+
+// Получить данные пользователя для личного кабинета
+app.get('/api/get_user_data', async (req, res) => {
+  const userId = req.session.userId;
+  if (!userId) return res.status(401).json({ error: 'Не авторизован' });
+
+  try {
+    const result = await app.locals.db.request()
+      .input('userId', mssql.Int, userId)
+      .query(`
+        SELECT 
+          Email, Number_Phone, Address, Password, First_name, Last_name, Patronymic, Passport_details
+        FROM Users
+        WHERE ID_Users = @userId
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    res.json(result.recordset[0]);
+  } catch (err) {
+    console.error('Ошибка при получении данных пользователя:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Обновить данные пользователя в личном кабинете
+app.put('/api/update_user', async (req, res) => {
+  const userId = req.session.userId;
+  if (!userId) return res.status(401).json({ error: 'Не авторизован' });
+
+  const {
+    Email,
+    Number_Phone,
+    Address,
+    First_name,
+    Last_name,
+    Patronymic,
+    Passport_details,
+    Password
+  } = req.body;
+
+  try {
+    let query = `
+      UPDATE Users
+      SET 
+        Email = @Email,
+        Number_Phone = @Number_Phone,
+        Address = @Address,
+        First_name = @First_name,
+        Last_name = @Last_name,
+        Patronymic = @Patronymic,
+        Passport_details = @Passport_details
+    `;
+
+    if (Password) {
+      query += `, Password = @Password`;
+    }
+
+    query += ` WHERE ID_Users = @userId`;
+
+    const request = app.locals.db.request()
+      .input('Email', mssql.VarChar(40), Email)
+      .input('Number_Phone', mssql.VarChar(20), Number_Phone)
+      .input('Address', mssql.VarChar(20), Address)
+      .input('First_name', mssql.VarChar(20), First_name)
+      .input('Last_name', mssql.VarChar(20), Last_name)
+      .input('Patronymic', mssql.VarChar(20), Patronymic)
+      .input('Passport_details', mssql.VarChar(20), Passport_details)
+      .input('userId', mssql.Int, userId);
+
+    if (Password) {
+      request.input('Password', mssql.VarChar(255), Password);
+    }
+
+    await request.query(query);
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Ошибка при обновлении пользователя:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
 

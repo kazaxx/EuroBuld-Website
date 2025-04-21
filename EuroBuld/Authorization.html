@@ -79,20 +79,18 @@
                 });
         
                 if (response.ok) {
-                    const role = await response.text(); // Получаем роль пользователя с сервера
-                    alert('Авторизация успешна!');
+                    const role = await response.text();
         
-                    // Перенаправление в зависимости от роли
                     if (role === 'Admin') {
-                        window.location.href = 'Аdmin_dashboard.html';  // Страница администратора
+                        window.location.href = 'Аdmin_dashboard.html'; 
                     } else if (role === 'Manager') {
-                        window.location.href = 'manager_dashboard.html';  // Страница менеджера
+                        window.location.href = 'manager_dashboard.html'; 
                     } else {
-                        window.location.href = 'user_dashboard.html';  // Страница для пользователей
+                        window.location.href = 'personalacount.html'; 
                     }
                 } else {
                     const errorMessage = await response.text();
-                    alert('Ошибка авторизации: ' + errorMessage);  // Показать ошибку от сервера
+                    alert('Ошибка авторизации: ' + errorMessage); 
                 }
             });
         </script>         

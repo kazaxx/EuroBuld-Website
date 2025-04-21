@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Мои заказы</title>
+  <link rel="stylesheet" href="css/styele.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7f9;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="left-wrapper">
+      <div class="left-menu">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="service.html" class="nav-link">Услуги</a>
+        <a href="AboutUs.html" class="nav-link">О нас</a>
+        <a href="contact.html" class="nav-link">Контакты</a>
+      </div>
+      <img src="images/Screenshot_2.png" class="poloska" width="440" height="7">
+    </div>
+  </header>  
+
+  <aside class="menu-wrapper">
+    <div class="menu-inner">
+      <a href="" id="orders-link"><i class="fas fa-box"></i>Заказы</a>
+      <a href="" id="profile-link"><i class="fas fa-user"></i>Профиль</a>
+    </div>
+  </aside>
+  
+  <div class="orders-container">
+    <h1>Ваши заказы</h1>
+    <div id="orders-container"></div>
+  </div>
+
+  <div id="profile-container">
+    <h1>Ваши личные данные</h1>
+    <form id="profile-form">
+      <label>Email: <input type="email" name="Email" required></label><br><br>
+      <label>Пароль: 
+        <div class="password-wrapper">
+          <input type="password" name="Password" id="password" placeholder="Введите новый пароль">
+          <button type="button" id="toggle-password" class="password-toggle-btn">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div><br>
+      </label>  
+      <label>Телефон: <input type="text" name="Number_Phone"></label><br><br>
+      <label>Адрес: <input type="text" name="Address"></label><br><br>
+      <label>Имя: <input type="text" name="First_name"></label><br><br>
+      <label>Фамилия: <input type="text" name="Last_name"></label><br><br>
+      <label>Отчество: <input type="text" name="Patronymic"></label><br><br>
+      <label>Паспортные данные: <input type="text" name="Passport_details"></label><br><br>
+      <button type="submittt">Сохранить</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('toggle-password').addEventListener('click', function () {
+          const passwordInput = document.getElementById('password');
+          const type = passwordInput.type === 'password' ? 'text' : 'password';
+          passwordInput.type = type;
+          this.textContent = type === 'password' ? 'Показать' : 'Скрыть';
+        });
+
+        document.getElementById('profile-link').addEventListener('click', function (e) {
+      e.preventDefault();
+
+      const ordersContainer = document.querySelector('.orders-container');
+      const profileContainer = document.getElementById('profile-container');
+
+      ordersContainer.style.display = 'none';
+      profileContainer.style.display = 'block';
+
+      fetch('/api/get_user_data')
+        .then(res => res.json())
+        .then(user => {
+          const form = document.getElementById('profile-form');
+          
+          if (user) {
+            Object.keys(user).forEach(field => {
+              if (user[field] === null || user[field] === "null") {
+                user[field] = '';
+              }
+            });
+
+            form.elements['Email'].value = user.Email || '';
+            form.elements['Password'].value = user.Password || '';
+            form.elements['Number_Phone'].value = user.Number_Phone || '';
+            form.elements['Address'].value = user.Address || '';
+            form.elements['First_name'].value = user.First_name || '';
+            form.elements['Last_name'].value = user.Last_name || '';
+            form.elements['Patronymic'].value = user.Patronymic || '';
+            form.elements['Passport_details'].value = user.Passport_details || '';
+
+            Object.keys(user).forEach(field => {
+              const inputField = form.elements[field];
+              if (!user[field]) {
+                inputField.setAttribute('placeholder', 'Это поле не заполнено');
+              } else {
+                inputField.removeAttribute('placeholder');
+              }
+            });
+
+            Object.keys(user).forEach(field => {
+              const inputField = form.elements[field];
+              if (user[field]) {
+                inputField.setAttribute('data-valid', 'true');
+                inputField.style.borderColor = 'green';
+              } else {
+                inputField.setAttribute('data-valid', 'false');
+                inputField.style.borderColor = 'red';
+              }
+            });
+          }
+        })
+        .catch(err => {
+          console.error('Ошибка при получении данных пользователя:', err);
+        });
+    });
+
+    document.getElementById('profile-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const updatedUser = {};
+      formData.forEach((value, key) => updatedUser[key] = value);
+
+      Object.keys(updatedUser).forEach(key => {
+        if (!updatedUser[key]) {
+          delete updatedUser[key];
+        }
+      });
+
+      fetch('/api/get_userId')
+        .then(res => res.json())
+        .then(data => {
+          const userId = data.userId;
+          if (userId) {
+            if (!updatedUser.Password) {
+              delete updatedUser.Password;
+            }
+
+            fetch(`/api/update_user`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(updatedUser)
+            })
+            .then(res => res.json())
+            .then(result => {
+              alert('Профиль обновлен!');
+            })
+            .catch(err => console.error('Ошибка при обновлении:', err));
+          }
+        });
+    });
+
+    fetch('/api/get_userId')
+      .then(response => response.json())
+      .then(data => {
+        const userId = data.userId;
+
+        if (userId) {
+          fetch(`/api/user_orders/${userId}`)
+            .then(response => response.json())
+            .then(orders => {
+              const container = document.getElementById('orders-container');
+
+              if (orders.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#888;">У вас пока нет заказов.</p>`;
+                return;
+              }
+
+              orders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
+
+                const itemsList = order.Items.map(item => `<li>${item}</li>`).join('');
+
+                card.innerHTML = ` 
+                  <h2>Заказ #${order.OrderID}</h2>
+                  <div class="order-info">
+                    <p><strong>Дата начала:</strong> ${new Date(order.OrderDate).toLocaleDateString()}</p>
+                    <p><strong>Дата окончания:</strong> ${new Date(order.DateEnding).toLocaleDateString()}</p>
+                    <p><strong>Статус:</strong> ${order.Status}</p>
+                    <p><strong>Сумма:</strong> ${order.FinalSum ?? '—'} руб.</p>
+                    <p><strong>Услуги:</strong></p>
+                    <ul class="items-list">${itemsList}</ul>
+                  </div>
+                `;
+                container.appendChild(card);
+              });
+            })
+            .catch(error => {
+              console.error('Ошибка при загрузке заказов:', error);
+            });
+        } else {
+          console.log('Пользователь не авторизован');
+        }
+      })
+      .catch(error => {
+        console.error('Ошибка получения userId:', error);
+      });
+  </script>  
+</body>
+</html>
