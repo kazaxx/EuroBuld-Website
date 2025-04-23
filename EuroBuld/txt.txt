@@ -1,3 +1,368 @@
+не отображаеться почта чтобы попасть в личный кабинет
+
+сделать защиту от нескольких заказов 1 заказ раз в час
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+  <link rel="stylesheet" href="css/styele.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="left-wrapper">
+      <div class="left-menu">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="service.html" class="nav-link-2">Услуги</a>
+        <a href="AboutUs.html" class="nav-link">О нас</a>
+        <a href="contact.html" class="nav-link">Контакты</a>
+      </div>
+      <img src="images/Screenshot_2.png" class="poloska" width="440" height="7">
+    </div>
+  
+    <div class="right-menu">
+      <button class="auth-btn">Вход</button>
+      <button class="auth-btn-2">Регистрация</button>
+    </div>
+  </header>  
+
+  <div class="wrapper">
+    <div id="product-container" class="product-container"></div>
+  </div>
+
+  <div class="recommended-container" id="recommended">
+  </div>
+
+  <div class="swipe-buttons">
+    <button class="swipe-btn" id="prevBtn">←</button>
+    <button class="swipe-btn" id="nextBtn">→</button>
+  </div>
+
+<script>
+  function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+
+  async function fetchProductById(id) {
+    try {
+      const response = await fetch(`/api/service/${id}`);
+      if (!response.ok) {
+        throw new Error('Ошибка при получении данных о товаре');
+      }
+      const product = await response.json();
+      displayProduct(product);
+      fetchRecommendedServices(); // Загружаем рекомендованные товары
+    } catch (error) {
+      console.error('Ошибка:', error);
+      document.getElementById('product-container').innerHTML = '<p>Не удалось загрузить данные о товаре.</p>';
+    }
+  }
+
+  function displayProduct(product) {
+    const container = document.getElementById('product-container');
+    container.innerHTML = `
+      <div class="product-card">
+        <div class="image-wrapper">
+          <img src="data:image/jpeg;base64,${product.ImageBase64}" alt="${product.Item_Name}">
+        </div>
+        <div class="info-wrapper">
+          <h2>${product.Item_Name}</h2>
+          <div class="price">${product.Price}</div>
+          <p>${product.Item_Description}</p>
+          <button class="buy-btn" onclick="buyService(${product.ID_Service})">Купить</button>
+        </div>
+      </div>
+    `;
+    
+    document.title = `${product.Item_Name}`;
+  }
+
+  async function buyService(serviceId) {
+  try {
+    // Проверяем авторизацию и получаем данные пользователя
+    const response = await fetch('/api/check_auth', {
+      credentials: 'include' // для передачи кук
+    });
+    const authData = await response.json();
+    
+    if (!authData.isAuth) {
+      alert('Пожалуйста, авторизуйтесь для оформления покупки.');
+      return;
+    }
+
+    // Получаем id пользователя из данных авторизации
+    const userId = authData.userId;  // предполагается, что сервер возвращает id пользователя в ответе
+
+    if (!userId) {
+      alert('Ошибка: Не удалось получить данные пользователя.');
+      return;
+    }
+
+    // Отправляем запрос на создание заказа с id_user и ID_Service
+    const orderResponse = await fetch('/api/customer_orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+  ID_Users: userId,  // Исправлено название параметра
+  ID_Service: serviceId,
+  Order_Date: new Date().toISOString().split('T')[0], // Добавить дату
+}),      credentials: 'include' // Важно для передачи кук
+    });
+
+    if (orderResponse.ok) {
+      alert('Услуга успешно куплена!');
+    } else {
+      const error = await orderResponse.text();
+      alert(`Ошибка: ${error}`);
+    }
+  } catch (error) {
+    console.error('Ошибка при оформлении заказа:', error);
+    alert('Ошибка при соединении с сервером');
+  }
+}
+
+
+
+  async function fetchRecommendedServices() {
+    try {
+      const response = await fetch('/api/service');
+      const services = await response.json();
+      displayRecommendedServices(services.slice(0, 5));
+    } catch (error) {
+      console.error('Ошибка при загрузке рекомендованных товаров:', error);
+    }
+  }
+
+  function displayRecommendedServices(services) {
+    const container = document.getElementById('recommended');
+    container.innerHTML = '';
+    services.forEach(service => {
+      const card = document.createElement('div');
+      card.className = 'recommended-card';
+      card.innerHTML = `
+        <img src="data:image/jpeg;base64,${service.ImageBase64}" alt="${service.Item_Name}">
+        <h3>${service.Item_Name}</h3>
+        <div class="price">${service.Price}</div>
+        <button class="details-btn" onclick="openProduct(${service.ID_Service})">Подробнее</button>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function openProduct(id) {
+    window.location.href = `product.html?id=${id}`;
+  }
+
+  let scrollAmount = 0;
+  const recommendedContainer = document.getElementById('recommended');
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    scrollAmount -= 300;
+    if (scrollAmount < 0) scrollAmount = 0;
+    recommendedContainer.scrollTo({
+      left: scrollAmount,
+      behavior: 'smooth'
+    });
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    scrollAmount += 300;
+    recommendedContainer.scrollTo({
+      left: scrollAmount,
+      behavior: 'smooth'
+    });
+  });
+
+  const productId = getQueryParam('id');
+  if (productId) {
+    fetchProductById(productId);
+  } else {
+    document.getElementById('product-container').innerHTML = '<p>Товар не найден.</p>';
+  }
+</script>
+</body>
+</html>
+
+
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="css/styele.css">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+        <title>Авторизация</title>
+    </head>
+    <body>
+        <div class="box"><div class="grad-background"></div></div>
+        <div class="falling-icons">
+            <i class="fas fa-hammer"></i>
+            <i class="fas fa-wrench"></i>
+            <i class="fas fa-screwdriver"></i>
+            <i class="fas fa-tools"></i>
+            <i class="fas fa-hammer"></i>
+            <i class="fas fa-wrench"></i>
+            <i class="fas fa-screwdriver"></i>
+            <i class="fas fa-tools"></i>
+            <i class="fas fa-drill"></i>
+            <i class="fas fa-level-up-alt"></i>
+            <i class="fas fa-paint-roller"></i>
+            <i class="fas fa-cogs"></i>
+            <i class="fas fa-gear"></i>
+            <i class="fas fa-hammer"></i>
+            <i class="fas fa-bolt"></i>
+            <i class="fas fa-lightbulb"></i>
+            <i class="fas fa-ruler"></i>
+          </div>
+        <div class="desktop-auth"><img class="preview" src="images/fon1.jpg" /></div>
+        <div class="frame22">
+            <div class="foto"><a href="index.html"><img src="images/Logo2.png" width="400" height="300"></a></div>
+            <div class="div22">
+                <div class="heading"><div class="title">Войдите в аккаунт аккаунт</div></div>
+                <form id="registerForm">
+                    <div class="input-large">
+                        <div class="input">
+                            <div class="container">
+                                <div class="control">
+                                    <input type="email" id="email" class="input-field" placeholder="Адрес электронной почты" required />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-large">
+                        <div class="input">
+                            <div class="container">
+                                <div class="control">
+                                    <input type="password" id="password" class="input-field" placeholder="Пароль" required />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="button"><div class="label">Войти</div></button>
+                </form>
+                <div class="LABEL-wrapper">
+                    <p class="LABEL">
+                        <span class="text-wrapper">Еще нет аккаунта?</span>
+                        <span class="span">&nbsp;</span>
+                        <a href="Registration.html"><span class="text-wrapper-4">Зарегистрироваться</span></a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.getElementById('registerForm').addEventListener('submit', async function(event) {
+                event.preventDefault();
+        
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+        
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                if (response.ok) {
+                    const role = await response.text();
+        
+                    if (role === 'Admin') {
+                        window.location.href = 'Аdmin_dashboard.html'; 
+                    } else if (role === 'Manager') {
+                        window.location.href = 'manager_dashboard.html'; 
+                    } else {
+                        window.location.href = 'personalacount.html'; 
+                    }
+                } else {
+                    const errorMessage = await response.text();
+                    alert('Ошибка авторизации: ' + errorMessage); 
+                }
+            });
+            ddocument.addEventListener('DOMContentLoaded', async function() {
+ 
+            const authCheck = await fetch('/api/check_auth', {
+                credentials: 'include'
+            });
+            const authData = await authCheck.json();
+            
+            if (authData.isAuth) {
+                window.location.href = 'personalacount.html';
+            } else if (authData.rememberEmail) {
+                document.getElementById('email').value = authData.rememberEmail;
+                document.getElementById('password').focus();
+            }
+        
+            document.getElementById('registerForm').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ email, password })
+                });
+                
+                if (response.ok) {
+                const role = await response.text();
+                
+                if (role === 'Admin') {
+                    window.location.href = 'Аdmin_dashboard.html'; 
+                } else if (role === 'Manager') {
+                    window.location.href = 'manager_dashboard.html'; 
+                } else {
+                    window.location.href = 'personalacount.html'; 
+                }
+                } else {
+                const errorMessage = await response.text();
+                alert('Ошибка авторизации: ' + errorMessage); 
+                }
+            });
+            });
+        </script>         
+    </body>
+    <style>
+        @import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.cs");
+        * {
+            -webkit-font-smoothing: antialiased;
+            box-sizing: border-box;
+        }
+        html,
+        body {
+            margin: 0px;
+            height: 100%;
+        }
+
+        button:focus-visible {
+            outline: 2px solid #4a90e2 !important;
+            outline: -webkkit-focus-ring-color auto 5px !important;
+        }
+        a {
+            text-decoration: none;
+        }
+
+        :root {
+            --headings-h6-font-family: "Inter", Helvetica; 
+            --headings-h6-font-weight: 600;
+            --headings-h6-font-size: 14px; 
+            --headings-h6-letter-spacing: 0px; 
+            --headings-h6-line-height: 24px; 
+            --headings-h6-font-style: normal;    
+        }
+    </style>
+</html>
+
+
 const express = require('express');
 const session = require('express-session');
 const mssql = require('mssql');
@@ -212,11 +577,11 @@ app.post('/login', async (req, res) => {
       }
 
       req.session.userId = user.ID_Users;
-      req.session.email = user.Email;
       console.log('LOGGED IN, userId =', req.session.userId);
 
+      // Всегда устанавливаем куку на 30 дней
       res.cookie('rememberUser', email, { 
-        maxAge: 30 * 24 * 60 * 60 * 1000, 
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
         httpOnly: true 
       });
       
@@ -229,9 +594,11 @@ app.post('/login', async (req, res) => {
 });
 
 // Проверка авторизации пользователя
+// Проверка авторизации пользователя
 app.get('/api/check_auth', async (req, res) => {
   if (req.session.userId) {
     try {
+      // Проверяем, является ли пользователь сотрудником
       let result = await app.locals.db.request()
         .input('userId', mssql.Int, req.session.userId)
         .query(`
@@ -245,15 +612,16 @@ app.get('/api/check_auth', async (req, res) => {
         const staff = result.recordset[0];
         return res.json({
           isAuth: true,
-          userId: staff.ID_Staff,
+          userId: staff.ID_Staff, // Добавлено: возвращаем ID сотрудника
           email: staff.Email,
           role: staff.roll_name
         });
       } else {
+        // Если не сотрудник, возвращаем данные обычного пользователя
         return res.json({
           isAuth: true,
-          userId: req.session.userId, 
-          email: req.session.email, 
+          userId: req.session.userId, // Добавлено: ID из сессии
+          email: req.session.email,   // Убедитесь, что email сохраняется при логине
           role: 'User'
         });
       }
@@ -281,8 +649,9 @@ app.post('/logout', (req, res) => {
       return res.status(500).send('Ошибка при выходе');
     }
     
+    // Удаляем куку rememberUser
     res.clearCookie('rememberUser');
-    res.clearCookie('connect.sid'); 
+    res.clearCookie('connect.sid'); // Удаляем куку сессии
     
     res.status(200).send('Успешный выход');
   });

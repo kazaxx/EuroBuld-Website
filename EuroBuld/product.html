@@ -68,13 +68,60 @@
           <h2>${product.Item_Name}</h2>
           <div class="price">${product.Price}</div>
           <p>${product.Item_Description}</p>
-          <button class="buy-btn">Купить</button>
+          <button class="buy-btn" onclick="buyService(${product.ID_Service})">Купить</button>
         </div>
       </div>
     `;
     
     document.title = `${product.Item_Name}`;
   }
+
+  async function buyService(serviceId) {
+  try {
+    // Проверяем авторизацию и получаем данные пользователя
+    const response = await fetch('/api/check_auth', {
+      credentials: 'include' // для передачи кук
+    });
+    const authData = await response.json();
+    
+    if (!authData.isAuth) {
+      alert('Пожалуйста, авторизуйтесь для оформления покупки.');
+      return;
+    }
+
+    // Получаем id пользователя из данных авторизации
+    const userId = authData.userId;  // предполагается, что сервер возвращает id пользователя в ответе
+
+    if (!userId) {
+      alert('Ошибка: Не удалось получить данные пользователя.');
+      return;
+    }
+
+    // Отправляем запрос на создание заказа с id_user и ID_Service
+    const orderResponse = await fetch('/api/customer_orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+  ID_Users: userId,  // Исправлено название параметра
+  ID_Service: serviceId,
+  Order_Date: new Date().toISOString().split('T')[0], // Добавить дату
+}),      credentials: 'include' // Важно для передачи кук
+    });
+
+    if (orderResponse.ok) {
+      alert('Услуга успешно куплена!');
+    } else {
+      const error = await orderResponse.text();
+      alert(`Ошибка: ${error}`);
+    }
+  } catch (error) {
+    console.error('Ошибка при оформлении заказа:', error);
+    alert('Ошибка при соединении с сервером');
+  }
+}
+
 
 
   async function fetchRecommendedServices() {
