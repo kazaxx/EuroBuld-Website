@@ -13,6 +13,133 @@
       margin: 0;
       padding: 20px;
     }
+    /* Медиа-запрос для мобильных устройств */
+@media only screen and (max-width: 768px) {
+  .desktop-main .overlap-group-wrapper {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .desktop-main .overlap-group {
+    height: auto;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .desktop-main .information,
+  .desktop-main .element-wrapper {
+    position: relative;
+    width: 100%;
+    left: 0;
+    top: 0;
+    padding: 20px;
+    height: auto;
+  }
+
+  .desktop-main .element {
+    width: 100%;
+    height: auto;
+    margin: 0;
+  }
+
+  .desktop-main .navigation-bar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    top: 0;
+    padding: 10px;
+  }
+
+  .desktop-main .nav-content {
+    width: 100%;
+    padding: 10px;
+    margin-right: 0;
+    flex-direction: column;
+  }
+
+  .desktop-main .left-content {
+    width: 100%;
+    margin: 0;
+  }
+
+  .desktop-main .top-content {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .desktop-main .div,
+  .desktop-main .text-wrapper-2 {
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .desktop-main .right-content {
+    width: 100%;
+    justify-content: center;
+    margin: 10px 0;
+  }
+
+  .desktop-main .euro-buld {
+    width: 100%;
+    font-size: 32px;
+    line-height: 1.2;
+    height: auto;
+    text-align: center;
+  }
+
+  .desktop-main .frame {
+    align-items: center;
+    margin-right: 0;
+  }
+
+  /* Уменьшаем размеры кнопок для мобильных */
+  .desktop-main .div-wrapper,
+  .desktop-main .text-wrapper-4 {
+    font-size: 14px;
+  }
+
+  .desktop-main .div-wrapper {
+    width: 90px;
+    height: 40px;
+  }
+
+  /* Адаптация навигационной линии */
+  .desktop-main .bottom-content {
+    width: 100%;
+  }
+
+  .desktop-main .line {
+    width: 100%;
+  }
+
+  /* Адаптация пользовательского профиля */
+  .user-profile a {
+    font-size: 18px;
+  }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media only screen and (max-width: 480px) {
+  .desktop-main .euro-buld {
+    font-size: 24px;
+  }
+
+  .desktop-main .top-content {
+    gap: 8px;
+  }
+
+  .desktop-main .div,
+  .desktop-main .text-wrapper-2 {
+    font-size: 16px;
+  }
+
+  .desktop-main .right-content {
+    gap: 15px;
+  }
+}
   </style>
   <body>
     <div class="desktop-main">

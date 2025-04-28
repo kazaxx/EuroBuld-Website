@@ -5,6 +5,106 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Контакты</title>
   <link rel="stylesheet" href="css/styele.css" />
+  <style>
+    /* Мобильные стили для Contact.html */
+@media only screen and (max-width: 768px) {
+  .navbar {
+    padding: 20px 15px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .left-menu {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .nav-link, .nav-link-2 {
+    font-size: 18px;
+  }
+
+  .poloska {
+    width: 100%;
+    height: 5px;
+  }
+
+  .contact-main {
+    flex-direction: column;
+    padding: 20px 15px;
+    margin: 30px auto;
+  }
+
+  .contact-form-container,
+  .contact-map-container {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .contact-form-container {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .contact-form-container h1 {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+
+  .contact-form label {
+    font-size: 14px;
+  }
+
+  .contact-form input[type="text"],
+  .contact-form input[type="emaill"],
+  .contact-form textarea,
+  .contact-form select {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .contact-submit-btn {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+
+  .contact-response-message {
+    font-size: 14px;
+  }
+
+  .contact-map-container iframe {
+    min-height: 300px;
+  }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media only screen and (max-width: 480px) {
+  .nav-link, .nav-link-2 {
+    font-size: 16px;
+  }
+
+  .contact-form-container h1 {
+    font-size: 22px;
+  }
+
+  .contact-form label {
+    font-size: 13px;
+  }
+
+  .contact-form input[type="text"],
+  .contact-form input[type="emaill"],
+  .contact-form textarea,
+  .contact-form select {
+    padding: 7px;
+    font-size: 13px;
+  }
+
+  .contact-submit-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+  </style>
   <body class="contact-page">
     <header class="navbar">
       <div class="left-wrapper">

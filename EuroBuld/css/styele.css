@@ -1,22 +1,3 @@
-@media (max-width: 768px) {
-  nav .nav-links {
-      display: none;
-}
-
-.hero h2 {
-    font-size: 2rem;
-}
-
-.service-cards {
-    flex-direction: column;
-    align-items: center;
-}
-
-.service-card {
-    width: 80%;
-}
-}
-
 .desktop-main {
   background-color: #ffffff;
   display: flex;
@@ -324,20 +305,20 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 50vw; /* или 100vw, если хочешь на весь экран */
+  width: 50vw;
   height: 100%;
   object-fit: cover;
-  z-index: -1; /* если нужно подложить под элементы */
+  z-index: -1;
 }
 
 .desktop-reg .preview {
   position: absolute;
   top: 0;
   right: 0;
-  width: 50vw; /* или 100vw, если хочешь на весь экран */
+  width: 50vw;
   height: 100%;
   object-fit: cover;
-  z-index: -1; /* если нужно подложить под элементы */
+  z-index: -1;
 }
 
 .frame22 {
@@ -402,33 +383,33 @@
   
 .input-large {
     display: flex;
-    width: 100%; /* Растягиваем контейнер на всю ширину родителя */
-    align-items: stretch; /* Делаем так, чтобы дочерние элементы растягивались */
-    margin-bottom: 10px; /* Отступ снизу */
-    box-sizing: border-box; /* Учитываем padding в расчет ширины */
+    width: 100%; 
+    align-items: stretch;
+    margin-bottom: 10px;
+    box-sizing: border-box;
 }
 
 .input {
     position: relative;
-    flex-grow: 1; /* Даем возможность растягиваться */
+    flex-grow: 1;
     height: 46px;
     background-color: #edf2f7;
     border-radius: 50px;
     padding: 0 16px;
-    width: 100%; /* Устанавливаем 100% ширины, чтобы элемент растягивался */
-    box-sizing: border-box; /* Учитываем отступы и границы в расчет ширины */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .input-field {
     border: none;
     background: transparent;
     outline: none;
-    width: 100%; /* Делаем так, чтобы поле ввода растягивалось */
-    height: 100%; /* Растягиваем на всю высоту */
+    width: 100%;
+    height: 100%;
     font-size: 16px;
     padding-left: 10px;
     border-radius: 50px;
-    box-sizing: border-box; /* Учитываем отступы и границы в расчет ширины */
+    box-sizing: border-box;
 }
 
 .input-field::placeholder {
@@ -931,7 +912,7 @@
       margin: 0px;
       height: 100%;
     }
-    /* a blue color as a generic focus style */
+
     button:focus-visible {
       outline: 2px solid #4a90e2 !important;
       outline: -webkit-focus-ring-color auto 5px !important;
@@ -1108,18 +1089,6 @@
       flex-direction: column;
       align-items: flex-start; 
       gap: 10px; 
-    }
-
-    @media (max-width: 768px) {
-      .services-container {
-        grid-template-columns: repeat(3, 1fr); 
-      }
-    }
-
-    @media (max-width: 480px) {
-      .services-container {
-        grid-template-columns: repeat(2, 1fr); 
-      }
     }
 
     .wrapper {
