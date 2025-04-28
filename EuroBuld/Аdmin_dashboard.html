@@ -29,7 +29,7 @@
     <div onclick="loadTable('requests')"><i class="fas fa-envelope"></i> Заявки</div>
     <div onclick="loadTable('foremen')"><i class="fas fa-hard-hat"></i> Начальники</div>
     <div onclick="loadTable('status_orders')"><i class="fas fa-tasks"></i> Статусы</div>
-    <div><i class="fas fa-chart-bar"></i> Отчёты</div>
+    <a href="report.html"><div><i class="fas fa-chart-bar"></i> Отчёты</div></a>
     <div><i class="fas fa-cog"></i> Настройки</div>
   </div>  
   <div class="main">
@@ -62,7 +62,15 @@
     let currentTable = 'users';
     let tableData = [];
     let rolesData = [];
+    let statusesData = [];
 
+    async function loadStatuses() {
+      if (statusesData.length === 0) {
+        const res = await fetch('/api/status_orders');
+        statusesData = await res.json();
+      }
+      return statusesData;
+    }
     async function loadRoles() {
       const res = await fetch('/api/role');
       rolesData = await res.json();
@@ -129,6 +137,40 @@
       }
 
       modalTitle.textContent = mode === 'edit' ? 'Изменить запись' : 'Добавить запись';
+
+      if (currentTable === 'processed_customer_orders') {
+    // Загружаем статусы, если еще не загружены
+    loadStatuses().then(statuses => {
+      formFields.innerHTML = `
+        <div class="modal-field">
+          <label>Статус</label>
+          <select name="ID_Status_Orders" required>
+            ${statuses.map(status => 
+              `<option value="${status.ID_Status_Orders}" ${data.ID_Status_Orders == status.ID_Status_Orders ? 'selected' : ''}>
+                ${status.Name_Status}
+              </option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="modal-field">
+          <label>Дата начала</label>
+          <input type="date" name="Date_Start" value="${data.Date_Start || ''}" required />
+        </div>
+        <div class="modal-field">
+          <label>Дата окончания</label>
+          <input type="date" name="Date_Ending" value="${data.Date_Ending || ''}" />
+        </div>
+        <div class="modal-field">
+          <label>Итоговая сумма</label>
+          <input type="number" step="0.01" name="Final_sum" value="${data.Final_sum || ''}" required />
+        </div>
+      `;
+      
+      document.getElementById('recordId').value = data?.ID_Processed_customer_orders || '';
+      modal.style.display = 'flex';
+    });
+    return;
+  }
 
       if (currentTable === 'staff') {
         let currentRoleId = data && data.ID_Role ? data.ID_Role : '';

@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Админ-панель | Отчеты</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary-color: #4f46e5;
+      --secondary-color: #6366f1;
+      --bg-light: #f3f4f6;
+      --bg-white: #ffffff;
+      --text-dark: #111827;
+      --text-muted: #6b7280;
+      --border-light: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-light);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .topbar a {
+      text-decoration: none;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .container {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .section {
+      background: var(--bg-white);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
+      padding: 2rem;
+      animation: fadeIn 0.6s ease;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+      font-size: 1.5rem;
+      color: var(--text-dark);
+    }
+
+    .section-header select {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background: var(--bg-light);
+      font-size: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.1);
+    }
+
+    .card .label {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .card .value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin: 0.5rem 0;
+    }
+
+    .card .change {
+      font-size: 0.9rem;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    .date-filters {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .date-filters input, .date-filters button {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+    }
+
+    .date-filters button {
+      background: var(--primary-color);
+      color: #fff;
+      cursor: pointer;
+      border: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    table thead {
+      background: var(--bg-light);
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    th {
+      font-weight: bold;
+      color: var(--text-dark);
+    }
+
+    tr:hover {
+      background: #f9fafb;
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--border-light);
+    }
+
+    .tab {
+      padding: 0.8rem 1.2rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: 0.3s;
+      color: var(--text-muted);
+    }
+
+    .tab.active {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .badge-success {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-warning {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-danger {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="index.html"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+  </div>
+    <div class="section">
+      <div class="section-header">
+        <h2>Динамика заказов</h2>
+        <select id="ordersChartType" onchange="renderOrdersChart()">
+          <option value="line">Линия</option>
+          <option value="bar">Столбцы</option>
+        </select>
+      </div>
+      <div class="date-filters">
+        <input type="date" id="startDate">
+        <span>по</span>
+        <input type="date" id="endDate">
+        <button onclick="renderOrdersChart()">Применить</button>
+      </div>
+      <div class="chart-container">
+        <canvas id="ordersChart"></canvas>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <h2>Статистика по услугам</h2>
+        <select id="servicesPeriod" onchange="renderServicesChart()">
+          <option value="month">Месяц</option>
+          <option value="quarter">Квартал</option>
+          <option value="year">Год</option>
+          <option value="all">Все время</option>
+        </select>
+      </div>
+      <div class="chart-container">
+        <canvas id="servicesChart"></canvas>
+      </div>
+    </div>
+
+      <div class="tab-content active" id="performanceChart">
+        <div class="chart-container">
+          <canvas id="staffPerformanceChart"></canvas>
+        </div>
+      </div>
+
+      <div class="tab-content" id="performanceTable">
+        <table>
+          <thead>
+            <tr>
+              <th>Сотрудник</th>
+              <th>Должность</th>
+              <th>Заказов</th>
+              <th>Сроки</th>
+              <th>Выручка</th>
+              <th>Эффективность</th>
+            </tr>
+          </thead>
+          <tbody id="performanceTableBody">
+            <!-- Данные -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <h2>Последние заказы</h2>
+        <select id="recentOrdersCount" onchange="loadRecentOrders()">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+        </select>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Клиент</th>
+            <th>Услуга</th>
+            <th>Дата</th>
+            <th>Статус</th>
+            <th>Сумма</th>
+          </tr>
+        </thead>
+        <tbody id="recentOrdersBody">
+          <!-- Данные -->
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    // Глобальные переменные для хранения данных и графиков
+    let ordersChart, servicesChart, staffPerformanceChart, financeChart;
+    let generalStatsData = {};
+    
+    // Инициализация страницы
+    document.addEventListener('DOMContentLoaded', function() {
+      // Установка дат по умолчанию для фильтров
+      const today = new Date();
+      const monthAgo = new Date();
+      monthAgo.setMonth(today.getMonth() - 1);
+      
+      document.getElementById('startDate').valueAsDate = monthAgo;
+      document.getElementById('endDate').valueAsDate = today;
+      
+      // Загрузка всех отчетов
+      loadGeneralStats();
+      renderOrdersChart();
+      renderServicesChart();
+      renderPerformanceChart();
+      renderFinanceChart();
+      loadRecentOrders();
+    });
+    
+    // Загрузка общей статистики
+    async function loadGeneralStats() {
+      const period = document.getElementById('timePeriod').value;
+      try {
+        const response = await fetch(`/api/reports/general?period=${period}`);
+        const data = await response.json();
+        generalStatsData = data;
+        
+        // Обновляем UI
+        document.getElementById('usersCount').textContent = data.users.total;
+        document.getElementById('usersChange').textContent = formatChange(data.users.change);
+        document.getElementById('usersChange').style.color = getChangeColor(data.users.change);
+        
+        document.getElementById('ordersCount').textContent = data.orders.total;
+        document.getElementById('ordersChange').textContent = formatChange(data.orders.change);
+        document.getElementById('ordersChange').style.color = getChangeColor(data.orders.change);
+        
+        document.getElementById('processedCount').textContent = data.processed.total;
+        document.getElementById('processedChange').textContent = formatChange(data.processed.change);
+        document.getElementById('processedChange').style.color = getChangeColor(data.processed.change);
+        
+        document.getElementById('revenueCount').textContent = formatCurrency(data.revenue.total);
+        document.getElementById('revenueChange').textContent = formatChange(data.revenue.change);
+        document.getElementById('revenueChange').style.color = getChangeColor(data.revenue.change);
+        
+        document.getElementById('staffCount').textContent = data.staff.total;
+        document.getElementById('staffChange').textContent = formatChange(data.staff.change);
+        document.getElementById('staffChange').style.color = getChangeColor(data.staff.change);
+        
+        document.getElementById('requestsCount').textContent = data.requests.total;
+        document.getElementById('requestsChange').textContent = formatChange(data.requests.change);
+        document.getElementById('requestsChange').style.color = getChangeColor(data.requests.change);
+        
+      } catch (error) {
+        console.error('Ошибка загрузки общей статистики:', error);
+      }
+    }
+    
+    // Форматирование изменения в процентах
+    function formatChange(change) {
+      if (change > 0) return `+${change.toFixed(1)}%`;
+      if (change < 0) return `${change.toFixed(1)}%`;
+      return '0%';
+    }
+    
+    // Цвет для изменения (зеленый/красный)
+    function getChangeColor(change) {
+      return change > 0 ? '#27ae60' : change < 0 ? '#e74c3c' : '#7f8c8d';
+    }
+    
+    // Форматирование валюты
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(amount);
+    }
+    
+    // График динамики заказов
+    async function renderOrdersChart() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const chartType = document.getElementById('ordersChartType').value;
+      
+      try {
+        const response = await fetch(`/api/reports/orders-trend?start=${startDate}&end=${endDate}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('ordersChart').getContext('2d');
+        
+        // Уничтожаем предыдущий график, если он есть
+        if (ordersChart) {
+          ordersChart.destroy();
+        }
+        
+        ordersChart = new Chart(ctx, {
+          type: chartType,
+          data: {
+            labels: data.labels,
+            datasets: [
+              {
+                label: 'Всего заказов',
+                data: data.totalOrders,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderWidth: 2,
+                tension: 0.1
+              },
+              {
+                label: 'Завершенные',
+                data: data.completedOrders,
+                borderColor: '#2ecc71',
+                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                borderWidth: 2,
+                tension: 0.1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Количество заказов'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Дата'
+                }
+              }
+            },
+            plugins: {
+              tooltip: {
+                mode: 'index',
+                intersect: false
+              },
+              legend: {
+                position: 'top'
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Ошибка загрузки данных для графика заказов:', error);
+      }
+    }
+    
+    // График популярности услуг
+    async function renderServicesChart() {
+      const period = document.getElementById('servicesPeriod').value;
+      
+      try {
+        const response = await fetch(`/api/reports/services-popularity?period=${period}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('servicesChart').getContext('2d');
+        
+        if (servicesChart) {
+          servicesChart.destroy();
+        }
+        
+        servicesChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: data.labels,
+            datasets: [{
+              data: data.data,
+              backgroundColor: [
+                '#3498db',
+                '#2ecc71',
+                '#e74c3c',
+                '#f39c12',
+                '#9b59b6',
+                '#1abc9c',
+                '#d35400',
+                '#34495e'
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'right'
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = context.raw || 0;
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = Math.round((value / total) * 100);
+                    return `${label}: ${value} (${percentage}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Ошибка загрузки данных для графика услуг:', error);
+      }
+    }
+    
+    // График эффективности сотрудников
+    async function renderPerformanceChart() {
+      const period = document.getElementById('performancePeriod').value;
+      
+      try {
+        const response = await fetch(`/api/reports/staff-performance?period=${period}`);
+        const data = await response.json();
+        
+        // Обновляем таблицу
+        const tableBody = document.getElementById('performanceTableBody');
+        tableBody.innerHTML = '';
+        
+        data.forEach(staff => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${staff.name}</td>
+            <td>${staff.role}</td>
+            <td>${staff.orders}</td>
+            <td>${staff.avgDays} дн.</td>
+            <td>${formatCurrency(staff.revenue)}</td>
+            <td>
+              <div style="width: 100%; background: #eee; height: 20px; border-radius: 10px;">
+                <div style="width: ${staff.efficiency}%; background: ${getEfficiencyColor(staff.efficiency)}; height: 100%; border-radius: 10px;"></div>
+              </div>
+              <small>${staff.efficiency}%</small>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+        
+        // Создаем график
+        const ctx = document.getElementById('staffPerformanceChart').getContext('2d');
+        
+        if (staffPerformanceChart) {
+          staffPerformanceChart.destroy();
+        }
+        
+        staffPerformanceChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: data.map(item => item.name),
+            datasets: [
+              {
+                label: 'Количество заказов',
+                data: data.map(item => item.orders),
+                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                borderColor: '#3498db',
+                borderWidth: 1
+              },
+              {
+                label: 'Выручка',
+                data: data.map(item => item.revenue),
+                backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                borderColor: '#2ecc71',
+                borderWidth: 1,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Количество заказов'
+                }
+              },
+              y1: {
+                position: 'right',
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Выручка (руб)'
+                },
+                grid: {
+                  drawOnChartArea: false
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Сотрудник'
+                }
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                      label += ': ';
+                    }
+                    if (context.datasetIndex === 1) {
+                      label += formatCurrency(context.raw);
+                    } else {
+                      label += context.raw;
+                    }
+                    return label;
+                  }
+                }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Ошибка загрузки данных эффективности сотрудников:', error);
+      }
+    }
+    
+    // Цвет для индикатора эффективности
+    function getEfficiencyColor(efficiency) {
+      if (efficiency > 80) return '#2ecc71';
+      if (efficiency > 50) return '#f39c12';
+      return '#e74c3c';
+    }
+    
+    // Финансовый график
+    async function renderFinanceChart() {
+      const period = document.getElementById('financePeriod').value;
+      
+      try {
+        const response = await fetch(`/api/reports/finance?period=${period}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('financeChart').getContext('2d');
+        
+        if (financeChart) {
+          financeChart.destroy();
+        }
+        
+        financeChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.labels,
+            datasets: [
+              {
+                label: 'Выручка',
+                data: data.revenue,
+                borderColor: '#2ecc71',
+                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1
+              },
+              {
+                label: 'Расходы',
+                data: data.expenses,
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1
+              },
+              {
+                label: 'Прибыль',
+                data: data.profit,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'Сумма (руб)'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Период'
+                }
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                      label += ': ';
+                    }
+                    label += formatCurrency(context.raw);
+                    return label;
+                  }
+                }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Ошибка загрузки финансовых данных:', error);
+      }
+    }
+    
+    // Загрузка последних заказов
+    async function loadRecentOrders() {
+      const count = document.getElementById('recentOrdersCount').value;
+      
+      try {
+        const response = await fetch(`/api/reports/recent-orders?count=${count}`);
+        const data = await response.json();
+        
+        const tbody = document.getElementById('recentOrdersBody');
+        tbody.innerHTML = '';
+        
+        data.forEach(order => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${order.id}</td>
+            <td>${order.client}</td>
+            <td>${order.service}</td>
+            <td>${new Date(order.date).toLocaleDateString()}</td>
+            <td><span class="badge ${getStatusClass(order.status)}">${order.status}</span></td>
+            <td>${formatCurrency(order.amount)}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Ошибка загрузки последних заказов:', error);
+      }
+    }
+    
+    // Класс для статуса заказа
+    function getStatusClass(status) {
+      if (status.includes('Завершен') || status.includes('Выполнен')) return 'badge-success';
+      if (status.includes('В работе') || status.includes('Обработка')) return 'badge-warning';
+      return 'badge-danger';
+    }
+    
+    // Переключение между вкладками
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+  </script>
+</body>
+</html>

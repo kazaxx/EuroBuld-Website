@@ -1850,3 +1850,89 @@
       70% { transform: scale(1.1); opacity: 1; }
       100% { transform: scale(1); }
     }
+
+    .reports-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    
+    .report-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    
+    .report-card h3 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    
+    .chart-container {
+      height: 200px;
+      margin-top: 15px;
+    }
+
+    /* Дополнительные стили для страницы отчетов */
+.dashboard-header {
+  background: linear-gradient(135deg, #2c3e50, #3498db);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.stat-card .value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 10px 0;
+}
+
+.stat-card .label {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.change-positive {
+  color: #27ae60;
+}
+
+.change-negative {
+  color: #e74c3c;
+}
+
+.change-neutral {
+  color: #f39c12;
+}
+
+.period-selector {
+  background-color: white;
+  border-radius: 50px;
+  padding: 5px;
+  display: inline-flex;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.period-selector .btn {
+  border-radius: 50px;
+  padding: 5px 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.period-selector .btn.active {
+  background-color: #3498db;
+  color: white;
+}

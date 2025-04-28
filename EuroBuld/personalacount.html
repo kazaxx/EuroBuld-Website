@@ -58,7 +58,7 @@
       <label>Фамилия: <input type="text" name="Last_name"></label><br><br>
       <label>Отчество: <input type="text" name="Patronymic"></label><br><br>
       <label>Паспортные данные: <input type="text" name="Passport_details"></label><br><br>
-      <button type="submittt">Сохранить</button>
+      <button type="submit">Сохранить</button>
     </form>
   </div>
 
@@ -138,42 +138,40 @@
         });
     });
 
-    document.getElementById('profile-form').addEventListener('submit', function (e) {
+    document.getElementById('profile-form').addEventListener('submit', async function (e) {
       e.preventDefault();
 
       const formData = new FormData(e.target);
-      const updatedUser = {};
-      formData.forEach((value, key) => updatedUser[key] = value);
+      const updatedUser = Object.fromEntries(formData.entries());
 
-      Object.keys(updatedUser).forEach(key => {
-        if (!updatedUser[key]) {
-          delete updatedUser[key];
-        }
-      });
-
-      fetch('/api/get_userId')
-        .then(res => res.json())
-        .then(data => {
-          const userId = data.userId;
-          if (userId) {
-            if (!updatedUser.Password) {
-              delete updatedUser.Password;
-            }
-
-            fetch(`/api/update_user`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(updatedUser)
-            })
-            .then(res => res.json())
-            .then(result => {
-              alert('Профиль обновлен!');
-            })
-            .catch(err => console.error('Ошибка при обновлении:', err));
-          }
+      try {
+        const response = await fetch('/api/update_user', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updatedUser)
         });
+
+        if (!response.ok) {
+          throw new Error('Ошибка при сохранении');
+        }
+
+        const result = await response.json();
+        alert('Данные успешно сохранены!');
+        
+        // Обновляем данные на странице
+        const inputs = e.target.elements;
+        for (const input of inputs) {
+          if (input.name && updatedUser[input.name]) {
+            input.style.borderColor = 'green';
+            input.setAttribute('data-valid', 'true');
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка при сохранении данных: ' + error.message);
+      }
     });
 
     fetch('/api/get_userId')

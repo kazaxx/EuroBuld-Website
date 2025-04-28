@@ -19,6 +19,48 @@
     #editBtn {
       margin-left: 10px;
     }
+    
+
+#printContent {
+  display: none;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.order-header {
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #333;
+  padding-bottom: 10px;
+}
+
+.order-details {
+  margin-bottom: 20px;
+}
+
+.order-section {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.order-label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.signature-block {
+  margin-top: 50px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.signature-line {
+  border-top: 1px solid #333;
+  width: 200px;
+  text-align: center;
+  padding-top: 5px;
+}
   </style>
 </head>
 <body>
@@ -34,6 +76,7 @@
     <div class="actions">
       <button onclick="openModal('add')">Взять заказ</button>
       <button id="editBtn" onclick="openModal('edit')" disabled>Редактировать заказ</button>
+      <button id="printBtn" onclick="printSelectedOrder()" disabled>Печать заказа</button>
     </div>
   </div>
   <div id="birthdayModal">
@@ -76,54 +119,36 @@
 
     async function loadTable(type) {
       currentTable = type;
-      await getCurrentStaffId();
-      if (!currentStaffId) {
-        alert('Вы не авторизованы как сотрудник');
+      let url = `/api/${type}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      tableData = data;
+
+      if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById('tableContainer').innerHTML = '<p>Нет данных</p>';
         return;
       }
 
-      let url;
-      if (type === 'processed_customer_orders') {
-        url = `/api/processed_customer_orders/staff/${currentStaffId}`;
-      } else {
-        url = `/api/${type}`;
+      let html = '<table><thead><tr>';
+      for (let key in data[0]) {
+        html += `<th>${key}</th>`;
       }
+      html += '</tr></thead><tbody>';
 
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        tableData = data;
-
-        if (!Array.isArray(data) || data.length === 0) {
-          document.getElementById('tableContainer').innerHTML = '<p>Нет данных</p>';
-          document.getElementById('editBtn').disabled = true;
-          return;
-        }
-
-        let html = '<table><thead><tr>';
-        for (let key in data[0]) {
-          html += `<th>${key}</th>`;
-        }
-        html += '</tr></thead><tbody>';
-
-        for (let row of data) {
-          html += `<tr onclick="selectRow(this, '${row.ID_Processed_customer_orders || row.ID_Customers_orders}')">`;
-          for (let key in row) {
-            if (key === 'ImageBase64') {
-              html += `<td><img src="data:image/jpeg;base64,${row[key]}" alt="Image" style="width:100px;height:auto;"/></td>`;
-            } else {
-              html += `<td>${row[key]}</td>`;
-            }
+      for (let row of data) {
+        html += '<tr onclick="selectRow(this, ' + row.ID_Processed_customer_orders + ')">';
+        for (let key in row) {
+          if (key === 'ImageBase64') {
+            html += `<td><img src="data:image/jpeg;base64,${row[key]}" alt="Image" style="width:100px;height:auto;"/></td>`;
+          } else {
+            html += `<td>${row[key]}</td>`;
           }
-          html += '</tr>';
         }
-
-        html += '</tbody></table>';
-        document.getElementById('tableContainer').innerHTML = html;
-      } catch (error) {
-        console.error('Ошибка при загрузке данных:', error);
-        document.getElementById('tableContainer').innerHTML = '<p>Ошибка при загрузке данных</p>';
+        html += '</tr>';
       }
+
+      html += '</tbody></table>';
+      document.getElementById('tableContainer').innerHTML = html;
     }
 
     function selectRow(row, orderId) {
@@ -134,9 +159,23 @@
       
       if (currentTable === 'processed_customer_orders') {
         document.getElementById('editBtn').disabled = false;
+        document.getElementById('printBtn').disabled = false;
       } else {
         document.getElementById('editBtn').disabled = true;
+        document.getElementById('printBtn').disabled = true;
       }
+    }
+
+    function printSelectedOrder() {
+      if (selectedOrderId) {
+        printOrder(selectedOrderId);
+      } else {
+        alert('Выберите заказ для печати');
+      }
+    }
+
+    function printOrder(orderId) {
+      window.open(`/api/print_order/${orderId}`, '_blank', 'width=800,height=600');
     }
 
     async function openModal(mode) {

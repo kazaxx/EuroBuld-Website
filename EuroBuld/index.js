@@ -20,13 +20,27 @@
 
   // Настроим сессии
   app.use(session({
-    secret: 'your-secret-key',
+    secret: 'mamamamamdsadsadsds',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }  // установите secure: true, если используете HTTPS
+    cookie: { 
+      secure: false,  // для HTTPS должно быть true
+      sameSite: 'Lax', // добавить эту строку
+      maxAge: 30 * 24 * 60 * 60 * 1000 // установите срок действия
+    }
   }));
 
   const validationSchemas = {
+    register: Joi.object({
+      Email: Joi.string().email().required().messages({
+        'string.email': 'Неверный формат email',
+        'any.required': 'Email обязателен для заполнения'
+      }),
+      Password: Joi.string().min(6).required().messages({
+        'string.min': 'Пароль должен содержать минимум 6 символов',
+        'any.required': 'Пароль обязателен для заполнения'
+      })
+    }),
     users: Joi.object({
       Email: Joi.string().email().required().messages({
         'string.email': 'Неверный формат email',
@@ -167,10 +181,10 @@
 
   // Авторизация по роли
   app.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-
+    const { email, password, rememberMe } = req.body;
+  
     const pool = await mssql.connect(sqlConfig);
-
+  
     try {
       let result = await pool.request()
         .input('Email', mssql.VarChar, email)
@@ -180,34 +194,34 @@
           LEFT JOIN Role r ON s.ID_Role = r.ID_Role
           WHERE s.Email = @Email
         `);
-
+  
       if (result.recordset.length > 0) {
         const staff = result.recordset[0];
-
+  
         if (staff.Password !== password) {
             return res.status(400).send('Неверный пароль');
         }
-
+  
         req.session.userId = staff.ID_Staff;
         req.session.role = staff.roll_name;
         req.session.email = staff.Email;
-
+  
         const birthdayCheck = await pool.request()
-    .input('userId', mssql.Int, staff.ID_Staff)
-    .query(`
-      SELECT 
-        CASE 
-          WHEN MONTH(Date_birth) = MONTH(GETDATE()) AND DAY(Date_birth) = DAY(GETDATE()) 
-          THEN 1 ELSE 0 
-        END AS isBirthdayToday
-      FROM Staff
-      WHERE ID_Staff = @userId
-    `);
-
-  if (birthdayCheck.recordset[0]?.isBirthdayToday === 1) {
-    req.session.isBirthday = true;
-  }
-
+          .input('userId', mssql.Int, staff.ID_Staff)
+          .query(`
+            SELECT 
+              CASE 
+                WHEN MONTH(Date_birth) = MONTH(GETDATE()) AND DAY(Date_birth) = DAY(GETDATE()) 
+                THEN 1 ELSE 0 
+              END AS isBirthdayToday
+            FROM Staff
+            WHERE ID_Staff = @userId
+          `);
+  
+        if (birthdayCheck.recordset[0]?.isBirthdayToday === 1) {
+          req.session.isBirthday = true;
+        }
+  
         if (staff.roll_name === 'Admin') {
             return res.status(200).send('Admin');
         } else if (staff.roll_name === 'Manager') {
@@ -219,24 +233,30 @@
         result = await pool.request()
           .input('Email', mssql.VarChar, email)
           .query('SELECT * FROM Users WHERE Email = @Email');
-
+  
         if (result.recordset.length === 0) {
             return res.status(400).send('Пользователь не найден');
         }
-
+  
         const user = result.recordset[0];
-
+  
         if (user.Password !== password) {
             return res.status(400).send('Неверный пароль');
         }
-
+  
         req.session.userId = user.ID_Users;
         req.session.email = user.Email;
-
-        res.cookie('rememberUser', email, { 
-          maxAge: 30 * 24 * 60 * 60 * 1000, 
-          httpOnly: true 
-        });
+        req.session.role = 'User'; // Добавляем роль для пользователя
+  
+        // Устанавливаем куку rememberUser только если пользователь выбрал "Запомнить меня"
+        if (rememberMe) {
+          res.cookie('rememberUser', email, {
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
+            httpOnly: true,
+            secure: false, // true если используете HTTPS
+            sameSite: 'Lax'
+          });
+        }
         
         return res.status(200).send('User');
       }
@@ -246,28 +266,68 @@
     }
   });
 
+  // Регистрация нового пользователя
+app.post('/register', async (req, res) => {
+  const { error, value } = validationSchemas.register.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
+  const { Email, Password } = value;
+
+  try {
+    // Проверяем, существует ли уже пользователь с таким email
+    const userCheck = await app.locals.db.request()
+      .input('Email', mssql.VarChar, Email)
+      .query('SELECT 1 FROM Users WHERE Email = @Email');
+
+    if (userCheck.recordset.length > 0) {
+      return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
+    }
+
+    // Создаем нового пользователя
+    await app.locals.db.request()
+      .input('Email', mssql.VarChar, Email)
+      .input('Password', mssql.VarChar, Password)
+      .query(`
+        INSERT INTO Users (Email, Password)
+        VALUES (@Email, @Password)
+      `);
+
+    res.status(201).json({ message: 'Регистрация успешна' });
+  } catch (error) {
+    console.error('Ошибка при регистрации:', error);
+    res.status(500).json({ message: 'Ошибка сервера при регистрации' });
+  }
+});
+
   // Проверка авторизации пользователя
   app.get('/api/check_auth', async (req, res) => {
-    if (req.session.userId && req.session.role) {
+    // Проверяем сессию в первую очередь
+    if (req.session.userId) {
       try {
-        let result = await app.locals.db.request()
-          .input('userId', mssql.Int, req.session.userId)
-          .query(`
-            SELECT s.*, r.roll_name
-            FROM Staff s
-            LEFT JOIN Role r ON s.ID_Role = r.ID_Role
-            WHERE s.ID_Staff = @userId
-          `);
-
-        if (result.recordset.length > 0) {
-          const staff = result.recordset[0];
-          return res.json({
-            isAuth: true,
-            userId: staff.ID_Staff,
-            email: staff.Email,
-            role: staff.roll_name
-          });
+        if (req.session.role && req.session.role !== 'User') {
+          // Для сотрудников
+          let result = await app.locals.db.request()
+            .input('userId', mssql.Int, req.session.userId)
+            .query(`
+              SELECT s.*, r.roll_name
+              FROM Staff s
+              LEFT JOIN Role r ON s.ID_Role = r.ID_Role
+              WHERE s.ID_Staff = @userId
+            `);
+  
+          if (result.recordset.length > 0) {
+            const staff = result.recordset[0];
+            return res.json({
+              isAuth: true,
+              userId: staff.ID_Staff,
+              email: staff.Email,
+              role: staff.roll_name
+            });
+          }
         } else {
+          // Для обычных пользователей
           return res.json({
             isAuth: true,
             userId: req.session.userId, 
@@ -280,7 +340,7 @@
       }
     }
     
-    // Проверяем куку rememberUser
+    // Проверяем куку rememberUser только если нет активной сессии
     if (req.cookies.rememberUser) {
       return res.json({
         isAuth: false,
@@ -410,7 +470,6 @@
   });
 
   //Выборка таблицы customer_orders в datagrid(админ панель)
-  //Выборка таблицы customer_orders в datagrid(админ панель)
 app.get('/api/customer_orders', async (req, res) => {
   try {
     const result = await app.locals.db.request().query(`
@@ -431,6 +490,79 @@ app.get('/api/customer_orders', async (req, res) => {
   }
 });
 
+app.get('/api/processed_customer_orders/:id', async (req, res) => {
+  try {
+    const result = await app.locals.db.request()
+      .input('id', mssql.Int, req.params.id)
+      .query(`
+        SELECT 
+          pco.ID_Processed_customer_orders,
+          pco.ID_Customer_orders,
+          pco.ID_Staff,
+          pco.ID_Foreman,
+          pco.ID_Status_Orders,
+          CONVERT(varchar, pco.Date_Start, 23) AS Date_Start,
+          CONVERT(varchar, pco.Date_Ending, 23) AS Date_Ending,
+          pco.Final_sum,
+          so.Name_Status
+        FROM Processed_customer_orders pco
+        LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+        WHERE pco.ID_Processed_customer_orders = @id
+      `);
+    
+    if (result.recordset.length === 0) {
+      return res.status(404).send('Заказ не найден');
+    }
+    
+    res.json(result.recordset[0]);
+  } catch (err) {
+    console.error('Ошибка при получении заказа:', err);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+app.put('/api/processed_customer_orders/:id', async (req, res) => {
+  const { id } = req.params;
+  const data = req.body;
+
+  try {
+    await app.locals.db.request()
+      .input('ID_Status_Orders', mssql.Int, data.ID_Status_Orders)
+      .input('Date_Start', mssql.Date, data.Date_Start)
+      .input('Date_Ending', mssql.Date, data.Date_Ending || null)
+      .input('Final_sum', mssql.Decimal(10,2), data.Final_sum)
+      .input('id', mssql.Int, id)
+      .query(`
+        UPDATE Processed_customer_orders 
+        SET 
+          ID_Status_Orders = @ID_Status_Orders,
+          Date_Start = @Date_Start,
+          Date_Ending = @Date_Ending,
+          Final_sum = @Final_sum
+        WHERE ID_Processed_customer_orders = @id
+      `);
+
+    res.status(200).json({ message: 'Запись обновлена' });
+  } catch (error) {
+    console.error('Ошибка при обновлении:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+
+
+app.get('/api/status_Orders', async (req, res) => {
+  try {
+    const result = await app.locals.db.request().query(`
+      SELECT ID_Status_Orders, Name_Status
+      FROM Status_Orders
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Ошибка при получении статусов:', err);
+    res.status(500).send('Ошибка сервера');
+  }
+});
   //Выборка таблицы processed_customer_orders в datagrid(админ панель)
   //Выборка таблицы processed_customer_orders в datagrid(админ панель)
 app.get('/api/processed_customer_orders', async (req, res) => {
@@ -1184,6 +1316,1020 @@ app.get('/api/processed_customer_orders', async (req, res) => {
     console.log('\n👋 Получен SIGINT. Завершаем работу...');
     process.exit(0);
   });
+
+  // Общая статистика
+app.get('/api/reports/general', async (req, res) => {
+  const { period } = req.query;
+  
+  try {
+    // Получаем данные для текущего периода
+    const currentData = await getGeneralStatsData(period);
+    
+    // Получаем данные для предыдущего периода для сравнения
+    let previousData;
+    if (period !== 'all') {
+      previousData = await getGeneralStatsData(getPreviousPeriod(period));
+    }
+    
+    // Формируем ответ с процентными изменениями
+    const response = {
+      users: calculateChange(currentData.users, previousData?.users),
+      orders: calculateChange(currentData.orders, previousData?.orders),
+      processed: calculateChange(currentData.processed, previousData?.processed),
+      revenue: calculateChange(currentData.revenue, previousData?.revenue),
+      staff: calculateChange(currentData.staff, previousData?.staff),
+      requests: calculateChange(currentData.requests, previousData?.requests)
+    };
+    
+    res.json(response);
+  } catch (error) {
+    console.error('Ошибка при получении общей статистики:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Динамика заказов
+app.get('/api/reports/orders-trend', async (req, res) => {
+  const { start, end } = req.query;
+  
+  try {
+    const result = await app.locals.db.request()
+      .input('startDate', mssql.Date, start)
+      .input('endDate', mssql.Date, end)
+      .query(`
+        WITH DateRange AS (
+          SELECT CAST(@startDate AS DATE) AS Date
+          UNION ALL
+          SELECT DATEADD(DAY, 1, Date)
+          FROM DateRange
+          WHERE DATEADD(DAY, 1, Date) <= @endDate
+        )
+        SELECT 
+          CONVERT(VARCHAR, dr.Date, 23) AS Date,
+          COUNT(co.ID_Customers_orders) AS TotalOrders,
+          SUM(CASE WHEN so.Name_Status = 'Завершен' THEN 1 ELSE 0 END) AS CompletedOrders
+        FROM DateRange dr
+        LEFT JOIN Customer_orders co ON CONVERT(DATE, co.Order_Date) = dr.Date
+        LEFT JOIN Processed_customer_orders pco ON co.ID_Customers_orders = pco.ID_Customer_orders
+        LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+        GROUP BY dr.Date
+        OPTION (MAXRECURSION 366);
+      `);
+    
+    const labels = result.recordset.map(row => row.Date);
+    const totalOrders = result.recordset.map(row => row.TotalOrders);
+    const completedOrders = result.recordset.map(row => row.CompletedOrders);
+    
+    res.json({ labels, totalOrders, completedOrders });
+  } catch (error) {
+    console.error('Ошибка при получении динамики заказов:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Популярность услуг
+app.get('/api/reports/services-popularity', async (req, res) => {
+  const { period } = req.query;
+  let dateCondition = '';
+  
+  switch (period) {
+    case 'month':
+      dateCondition = 'WHERE co.Order_Date >= DATEADD(MONTH, -1, GETDATE())';
+      break;
+    case 'quarter':
+      dateCondition = 'WHERE co.Order_Date >= DATEADD(QUARTER, -1, GETDATE())';
+      break;
+    case 'year':
+      dateCondition = 'WHERE co.Order_Date >= DATEADD(YEAR, -1, GETDATE())';
+      break;
+    case 'all':
+    default:
+      dateCondition = '';
+  }
+  
+  try {
+    const result = await app.locals.db.request().query(`
+      SELECT 
+        s.Item_Name AS ServiceName,
+        COUNT(co.ID_Customers_orders) AS OrderCount
+      FROM Service s
+      LEFT JOIN Customer_orders co ON s.ID_Service = co.ID_Service
+      ${dateCondition}
+      GROUP BY s.Item_Name
+      ORDER BY OrderCount DESC
+    `);
+    
+    const labels = result.recordset.map(row => row.ServiceName);
+    const data = result.recordset.map(row => row.OrderCount);
+    
+    res.json({ labels, data });
+  } catch (error) {
+    console.error('Ошибка при получении популярности услуг:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Эффективность сотрудников
+app.get('/api/reports/staff-performance', async (req, res) => {
+  const { period } = req.query;
+  let dateCondition = '';
+  
+  switch (period) {
+    case 'month':
+      dateCondition = 'AND pco.Date_Start >= DATEADD(MONTH, -1, GETDATE())';
+      break;
+    case 'quarter':
+      dateCondition = 'AND pco.Date_Start >= DATEADD(QUARTER, -1, GETDATE())';
+      break;
+    case 'year':
+      dateCondition = 'AND pco.Date_Start >= DATEADD(YEAR, -1, GETDATE())';
+      break;
+  }
+  
+  try {
+    const result = await app.locals.db.request().query(`
+      SELECT 
+        s.ID_Staff,
+        s.First_name + ' ' + s.Last_name + ' ' + ISNULL(s.Patronymic, '') AS StaffName,
+        r.roll_name AS Role,
+        COUNT(pco.ID_Processed_customer_orders) AS OrderCount,
+        AVG(DATEDIFF(DAY, pco.Date_Start, ISNULL(pco.Date_Ending, GETDATE()))) AS AvgDays,
+        SUM(CAST(pco.Final_sum AS DECIMAL(10,2))) AS Revenue,
+        CASE 
+          WHEN COUNT(pco.ID_Processed_customer_orders) = 0 THEN 0
+          ELSE 100 * SUM(CASE WHEN so.Name_Status = 'Завершен' THEN 1 ELSE 0 END) / COUNT(pco.ID_Processed_customer_orders)
+        END AS Efficiency
+      FROM Staff s
+      LEFT JOIN Role r ON s.ID_Role = r.ID_Role
+      LEFT JOIN Processed_customer_orders pco ON s.ID_Staff = pco.ID_Staff
+      LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+      WHERE pco.ID_Processed_customer_orders IS NOT NULL ${dateCondition}
+      GROUP BY s.ID_Staff, s.First_name, s.Last_name, s.Patronymic, r.roll_name
+      ORDER BY Revenue DESC
+    `);
+    
+    res.json(result.recordset.map(row => ({
+      id: row.ID_Staff,
+      name: row.StaffName,
+      role: row.Role,
+      orders: row.OrderCount,
+      avgDays: Math.round(row.AvgDays) || 0,
+      revenue: row.Revenue || 0,
+      efficiency: Math.round(row.Efficiency) || 0
+    })));
+  } catch (error) {
+    console.error('Ошибка при получении эффективности сотрудников:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Финансовые показатели
+app.get('/api/reports/finance', async (req, res) => {
+  const { period } = req.query;
+  let groupBy, dateFormat;
+  
+  switch (period) {
+    case 'month':
+      groupBy = 'YEAR(Date), MONTH(Date)';
+      dateFormat = 'YYYY-MM';
+      break;
+    case 'quarter':
+      groupBy = 'YEAR(Date), DATEPART(QUARTER, Date)';
+      dateFormat = 'YYYY-Q';
+      break;
+    case 'year':
+      groupBy = 'YEAR(Date)';
+      dateFormat = 'YYYY';
+      break;
+    default:
+      groupBy = 'YEAR(Date), MONTH(Date)';
+      dateFormat = 'YYYY-MM';
+  }
+  
+  try {
+    const result = await app.locals.db.request().query(`
+      WITH FinanceData AS (
+        SELECT 
+          pco.Date_Start AS Date,
+          CAST(pco.Final_sum AS DECIMAL(10,2)) AS Revenue,
+          CAST(r.salary AS DECIMAL(10,2)) * COUNT(DISTINCT s.ID_Staff) AS Expenses
+        FROM Processed_customer_orders pco
+        LEFT JOIN Staff s ON pco.ID_Staff = s.ID_Staff
+        LEFT JOIN Role r ON s.ID_Role = r.ID_Role
+        GROUP BY pco.Date_Start, r.salary
+      )
+      SELECT 
+        FORMAT(MIN(Date), '${dateFormat}') AS Period,
+        SUM(Revenue) AS Revenue,
+        SUM(Expenses) AS Expenses,
+        SUM(Revenue) - SUM(Expenses) AS Profit
+      FROM FinanceData
+      GROUP BY ${groupBy}
+      ORDER BY MIN(Date)
+    `);
+    
+    const labels = result.recordset.map(row => row.Period);
+    const revenue = result.recordset.map(row => row.Revenue || 0);
+    const expenses = result.recordset.map(row => row.Expenses || 0);
+    const profit = result.recordset.map(row => row.Profit || 0);
+    
+    res.json({ labels, revenue, expenses, profit });
+  } catch (error) {
+    console.error('Ошибка при получении финансовых показателей:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Последние заказы
+app.get('/api/reports/recent-orders', async (req, res) => {
+  const { count } = req.query;
+  
+  try {
+    const result = await app.locals.db.request()
+      .input('count', mssql.Int, count)
+      .query(`
+        SELECT TOP (@count)
+          pco.ID_Processed_customer_orders AS ID,
+          u.First_name + ' ' + ISNULL(u.Last_name, '') AS Client,
+          s.Item_Name AS Service,
+          pco.Date_Start AS Date,
+          so.Name_Status AS Status,
+          pco.Final_sum AS Amount
+        FROM Processed_customer_orders pco
+        LEFT JOIN Customer_orders co ON pco.ID_Customer_orders = co.ID_Customers_orders
+        LEFT JOIN Users u ON co.ID_Users = u.ID_Users
+        LEFT JOIN Service s ON co.ID_Service = s.ID_Service
+        LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+        ORDER BY pco.Date_Start DESC
+      `);
+    
+    res.json(result.recordset.map(row => ({
+      id: row.ID,
+      client: row.Client,
+      service: row.Service,
+      date: row.Date,
+      status: row.Status,
+      amount: row.Amount
+    })));
+  } catch (error) {
+    console.error('Ошибка при получении последних заказов:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Общая статистика
+app.get('/api/reports/general', async (req, res) => {
+  const { period } = req.query;
+  
+  try {
+    // Получаем данные для текущего периода
+    const currentData = await getGeneralStatsData(period);
+    
+    // Получаем данные для предыдущего периода для сравнения
+    let previousData;
+    if (period !== 'all') {
+      previousData = await getGeneralStatsData(getPreviousPeriod(period));
+    }
+    
+    // Формируем ответ с процентными изменениями
+    const response = {
+      users: calculateChange(currentData.users, previousData?.users),
+      orders: calculateChange(currentData.orders, previousData?.orders),
+      processed: calculateChange(currentData.processed, previousData?.processed),
+      revenue: calculateChange(currentData.revenue, previousData?.revenue),
+      staff: calculateChange(currentData.staff, previousData?.staff),
+      requests: calculateChange(currentData.requests, previousData?.requests)
+    };
+    
+    res.json(response);
+  } catch (error) {
+    console.error('Ошибка при получении общей статистики:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Динамика заказов
+app.get('/api/reports/orders-trend', async (req, res) => {
+  const { start, end } = req.query;
+  
+  try {
+    const result = await app.locals.db.request()
+      .input('startDate', mssql.Date, start)
+      .input('endDate', mssql.Date, end)
+      .query(`
+        WITH DateRange AS (
+          SELECT CAST(@startDate AS DATE) AS Date
+          UNION ALL
+          SELECT DATEADD(DAY, 1, Date)
+          FROM DateRange
+          WHERE DATEADD(DAY, 1, Date) <= @endDate
+        )
+        SELECT 
+          CONVERT(VARCHAR, dr.Date, 23) AS Date,
+          COUNT(co.ID_Customers_orders) AS TotalOrders,
+          SUM(CASE WHEN so.Name_Status = 'Завершен' THEN 1 ELSE 0 END) AS CompletedOrders
+        FROM DateRange dr
+        LEFT JOIN Customer_orders co ON CONVERT(DATE, co.Order_Date) = dr.Date
+        LEFT JOIN Processed_customer_orders pco ON co.ID_Customers_orders = pco.ID_Customer_orders
+        LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+        GROUP BY dr.Date
+        OPTION (MAXRECURSION 366);
+      `);
+    
+    const labels = result.recordset.map(row => row.Date);
+    const totalOrders = result.recordset.map(row => row.TotalOrders);
+    const completedOrders = result.recordset.map(row => row.CompletedOrders);
+    
+    res.json({ labels, totalOrders, completedOrders });
+  } catch (error) {
+    console.error('Ошибка при получении динамики заказов:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Популярность услуг
+app.get('/api/reports/services-popularity', async (req, res) => {
+  const { period } = req.query;
+  let dateCondition = '';
+  
+  switch (period) {
+    case 'month':
+      dateCondition = 'WHERE co.Order_Date >= DATEADD(MONTH, -1, GETDATE())';
+      break;
+    case 'quarter':
+      dateCondition = 'WHERE co.Order_Date >= DATEADD(QUARTER, -1, GETDATE())';
+      break;
+    case 'year':
+      dateCondition = 'WHERE co.Order_Date >= DATEADD(YEAR, -1, GETDATE())';
+      break;
+    case 'all':
+    default:
+      dateCondition = '';
+  }
+  
+  try {
+    const result = await app.locals.db.request().query(`
+      SELECT 
+        s.Item_Name AS ServiceName,
+        COUNT(co.ID_Customers_orders) AS OrderCount
+      FROM Service s
+      LEFT JOIN Customer_orders co ON s.ID_Service = co.ID_Service
+      ${dateCondition}
+      GROUP BY s.Item_Name
+      ORDER BY OrderCount DESC
+    `);
+    
+    const labels = result.recordset.map(row => row.ServiceName);
+    const data = result.recordset.map(row => row.OrderCount);
+    
+    res.json({ labels, data });
+  } catch (error) {
+    console.error('Ошибка при получении популярности услуг:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Эффективность сотрудников
+app.get('/api/reports/staff-performance', async (req, res) => {
+  const { period } = req.query;
+  let dateCondition = '';
+  
+  switch (period) {
+    case 'month':
+      dateCondition = 'AND pco.Date_Start >= DATEADD(MONTH, -1, GETDATE())';
+      break;
+    case 'quarter':
+      dateCondition = 'AND pco.Date_Start >= DATEADD(QUARTER, -1, GETDATE())';
+      break;
+    case 'year':
+      dateCondition = 'AND pco.Date_Start >= DATEADD(YEAR, -1, GETDATE())';
+      break;
+  }
+  
+  try {
+    const result = await app.locals.db.request().query(`
+      SELECT 
+        s.ID_Staff,
+        s.First_name + ' ' + s.Last_name + ' ' + ISNULL(s.Patronymic, '') AS StaffName,
+        r.roll_name AS Role,
+        COUNT(pco.ID_Processed_customer_orders) AS OrderCount,
+        AVG(DATEDIFF(DAY, pco.Date_Start, ISNULL(pco.Date_Ending, GETDATE()))) AS AvgDays,
+        SUM(CAST(pco.Final_sum AS DECIMAL(10,2))) AS Revenue,
+        CASE 
+          WHEN COUNT(pco.ID_Processed_customer_orders) = 0 THEN 0
+          ELSE 100 * SUM(CASE WHEN so.Name_Status = 'Завершен' THEN 1 ELSE 0 END) / COUNT(pco.ID_Processed_customer_orders)
+        END AS Efficiency
+      FROM Staff s
+      LEFT JOIN Role r ON s.ID_Role = r.ID_Role
+      LEFT JOIN Processed_customer_orders pco ON s.ID_Staff = pco.ID_Staff
+      LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+      WHERE pco.ID_Processed_customer_orders IS NOT NULL ${dateCondition}
+      GROUP BY s.ID_Staff, s.First_name, s.Last_name, s.Patronymic, r.roll_name
+      ORDER BY Revenue DESC
+    `);
+    
+    res.json(result.recordset.map(row => ({
+      id: row.ID_Staff,
+      name: row.StaffName,
+      role: row.Role,
+      orders: row.OrderCount,
+      avgDays: Math.round(row.AvgDays) || 0,
+      revenue: row.Revenue || 0,
+      efficiency: Math.round(row.Efficiency) || 0
+    })));
+  } catch (error) {
+    console.error('Ошибка при получении эффективности сотрудников:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Финансовые показатели
+app.get('/api/reports/finance', async (req, res) => {
+  const { period } = req.query;
+  let groupBy, dateFormat;
+  
+  switch (period) {
+    case 'month':
+      groupBy = 'YEAR(Date), MONTH(Date)';
+      dateFormat = 'YYYY-MM';
+      break;
+    case 'quarter':
+      groupBy = 'YEAR(Date), DATEPART(QUARTER, Date)';
+      dateFormat = 'YYYY-Q';
+      break;
+    case 'year':
+      groupBy = 'YEAR(Date)';
+      dateFormat = 'YYYY';
+      break;
+    default:
+      groupBy = 'YEAR(Date), MONTH(Date)';
+      dateFormat = 'YYYY-MM';
+  }
+  
+  try {
+    const result = await app.locals.db.request().query(`
+      WITH FinanceData AS (
+        SELECT 
+          pco.Date_Start AS Date,
+          CAST(pco.Final_sum AS DECIMAL(10,2)) AS Revenue,
+          CAST(r.salary AS DECIMAL(10,2)) * COUNT(DISTINCT s.ID_Staff) AS Expenses
+        FROM Processed_customer_orders pco
+        LEFT JOIN Staff s ON pco.ID_Staff = s.ID_Staff
+        LEFT JOIN Role r ON s.ID_Role = r.ID_Role
+        GROUP BY pco.Date_Start, r.salary
+      )
+      SELECT 
+        FORMAT(MIN(Date), '${dateFormat}') AS Period,
+        SUM(Revenue) AS Revenue,
+        SUM(Expenses) AS Expenses,
+        SUM(Revenue) - SUM(Expenses) AS Profit
+      FROM FinanceData
+      GROUP BY ${groupBy}
+      ORDER BY MIN(Date)
+    `);
+    
+    const labels = result.recordset.map(row => row.Period);
+    const revenue = result.recordset.map(row => row.Revenue || 0);
+    const expenses = result.recordset.map(row => row.Expenses || 0);
+    const profit = result.recordset.map(row => row.Profit || 0);
+    
+    res.json({ labels, revenue, expenses, profit });
+  } catch (error) {
+    console.error('Ошибка при получении финансовых показателей:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Последние заказы
+app.get('/api/reports/recent-orders', async (req, res) => {
+  const { count } = req.query;
+  
+  try {
+    const result = await app.locals.db.request()
+      .input('count', mssql.Int, count)
+      .query(`
+        SELECT TOP (@count)
+          pco.ID_Processed_customer_orders AS ID,
+          u.First_name + ' ' + ISNULL(u.Last_name, '') AS Client,
+          s.Item_Name AS Service,
+          pco.Date_Start AS Date,
+          so.Name_Status AS Status,
+          pco.Final_sum AS Amount
+        FROM Processed_customer_orders pco
+        LEFT JOIN Customer_orders co ON pco.ID_Customer_orders = co.ID_Customers_orders
+        LEFT JOIN Users u ON co.ID_Users = u.ID_Users
+        LEFT JOIN Service s ON co.ID_Service = s.ID_Service
+        LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+        ORDER BY pco.Date_Start DESC
+      `);
+    
+    res.json(result.recordset.map(row => ({
+      id: row.ID,
+      client: row.Client,
+      service: row.Service,
+      date: row.Date,
+      status: row.Status,
+      amount: row.Amount
+    })));
+  } catch (error) {
+    console.error('Ошибка при получении последних заказов:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Вспомогательные функции для отчетов
+async function getGeneralStatsData(period) {
+  let dateCondition = '';
+  
+  switch (period) {
+    case 'day':
+      dateCondition = 'WHERE CAST(GETDATE() AS DATE) = CAST(CreationDate AS DATE)';
+      break;
+    case 'week':
+      dateCondition = 'WHERE CreationDate >= DATEADD(WEEK, -1, GETDATE())';
+      break;
+    case 'month':
+      dateCondition = 'WHERE CreationDate >= DATEADD(MONTH, -1, GETDATE())';
+      break;
+    case 'year':
+      dateCondition = 'WHERE CreationDate >= DATEADD(YEAR, -1, GETDATE())';
+      break;
+    case 'all':
+    default:
+      dateCondition = '';
+  }
+  
+  const result = await app.locals.db.request().query(`
+    SELECT 
+      (SELECT COUNT(*) FROM Users ${dateCondition.replace('CreationDate', 'GETDATE()')}) AS Users,
+      (SELECT COUNT(*) FROM Customer_orders ${dateCondition.replace('CreationDate', 'Order_Date')}) AS Orders,
+      (SELECT COUNT(*) FROM Processed_customer_orders ${dateCondition.replace('CreationDate', 'Date_Start')}) AS Processed,
+      (SELECT ISNULL(SUM(CAST(Final_sum AS DECIMAL(10,2))), 0) FROM Processed_customer_orders ${dateCondition.replace('CreationDate', 'Date_Start')}) AS Revenue,
+      (SELECT COUNT(*) FROM Staff ${dateCondition.replace('CreationDate', 'Date_employment')}) AS Staff,
+      (SELECT COUNT(*) FROM Requests ${dateCondition.replace('CreationDate', 'Request_Date')}) AS Requests
+  `);
+  
+  return result.recordset[0];
+}
+
+function getPreviousPeriod(period) {
+  switch (period) {
+    case 'day': return 'day';
+    case 'week': return 'week';
+    case 'month': return 'month';
+    case 'year': return 'year';
+    default: return 'month';
+  }
+}
+
+function calculateChange(current, previous) {
+  if (!previous || current === 0) {
+    return { total: current || 0, change: 0 };
+  }
+  
+  const change = ((current - previous) / previous) * 100;
+  return { total: current, change: isFinite(change) ? change : 0 };
+}
+
+// Вспомогательные функции для отчетов
+async function getGeneralStatsData(period) {
+  let dateCondition = '';
+  
+  switch (period) {
+    case 'day':
+      dateCondition = 'WHERE CAST(GETDATE() AS DATE) = CAST(CreationDate AS DATE)';
+      break;
+    case 'week':
+      dateCondition = 'WHERE CreationDate >= DATEADD(WEEK, -1, GETDATE())';
+      break;
+    case 'month':
+      dateCondition = 'WHERE CreationDate >= DATEADD(MONTH, -1, GETDATE())';
+      break;
+    case 'year':
+      dateCondition = 'WHERE CreationDate >= DATEADD(YEAR, -1, GETDATE())';
+      break;
+    case 'all':
+    default:
+      dateCondition = '';
+  }
+  
+  const result = await app.locals.db.request().query(`
+    SELECT 
+      (SELECT COUNT(*) FROM Users ${dateCondition.replace('CreationDate', 'GETDATE()')}) AS Users,
+      (SELECT COUNT(*) FROM Customer_orders ${dateCondition.replace('CreationDate', 'Order_Date')}) AS Orders,
+      (SELECT COUNT(*) FROM Processed_customer_orders ${dateCondition.replace('CreationDate', 'Date_Start')}) AS Processed,
+      (SELECT ISNULL(SUM(CAST(Final_sum AS DECIMAL(10,2))), 0) FROM Processed_customer_orders ${dateCondition.replace('CreationDate', 'Date_Start')}) AS Revenue,
+      (SELECT COUNT(*) FROM Staff ${dateCondition.replace('CreationDate', 'Date_employment')}) AS Staff,
+      (SELECT COUNT(*) FROM Requests ${dateCondition.replace('CreationDate', 'Request_Date')}) AS Requests
+  `);
+  
+  return result.recordset[0];
+}
+
+function getPreviousPeriod(period) {
+  switch (period) {
+    case 'day': return 'day';
+    case 'week': return 'week';
+    case 'month': return 'month';
+    case 'year': return 'year';
+    default: return 'month';
+  }
+}
+
+function calculateChange(current, previous) {
+  if (!previous || current === 0) {
+    return { total: current || 0, change: 0 };
+  }
+  
+  const change = ((current - previous) / previous) * 100;
+  return { total: current, change: isFinite(change) ? change : 0 };
+}
+
+// Добавьте этот маршрут в ваш server.js
+app.get('/api/print_order/:id', async (req, res) => {
+  try {
+    const result = await app.locals.db.request()
+      .input('id', mssql.Int, req.params.id)
+      .query(`
+        SELECT
+          pco.ID_Processed_customer_orders AS [Номер заказа],
+          s.Item_Name AS [Услуга],
+          FORMAT(pco.Date_Start, 'dd.MM.yyyy') AS [Дата начала],
+          FORMAT(pco.Date_Ending, 'dd.MM.yyyy') AS [Дата завершения],
+          so.Name_Status AS [Статус],
+          pco.Final_sum AS [Итоговая сумма],
+          u.First_name + ' ' + u.Last_name + ' ' + u.Patronymic AS [Клиент ФИО],
+          u.Number_Phone AS [Телефон клиента],
+          u.Address AS [Адрес клиента],
+          st.First_name + ' ' + st.Last_name + ' ' + st.Patronymic AS [Менеджер ФИО],
+          f.First_Name + ' ' + f.Last_Name + ' ' + f.Patronymic AS [Прораб ФИО]
+        FROM Processed_customer_orders pco
+        INNER JOIN Customer_orders co ON pco.ID_Customer_orders = co.ID_Customers_orders
+        INNER JOIN Users u ON co.ID_Users = u.ID_Users
+        INNER JOIN Service s ON co.ID_Service = s.ID_Service
+        INNER JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+        INNER JOIN Staff st ON pco.ID_Staff = st.ID_Staff
+        INNER JOIN Foremen f ON pco.ID_Foreman = f.ID_Foreman
+        WHERE pco.ID_Processed_customer_orders = @id
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).send('Заказ не найден');
+    }
+
+    const order = result.recordset[0];
+    
+    // Формируем HTML для печати
+    const html = `
+      <!DOCTYPE html>
+      <html lang="ru">
+      <head>
+        <meta charset="UTF-8">
+        <title>Заказ #${order['Номер заказа']} | EuroBuld</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+          
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          
+          body {
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            background-color: #f9f9f9;
+          }
+          
+          .document {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            position: relative;
+          }
+          
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+          }
+          
+          .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+          }
+          
+          .document-title {
+            font-size: 20px;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+          }
+          
+          .document-number {
+            font-size: 16px;
+            color: #7f8c8d;
+          }
+          
+          .section {
+            margin-bottom: 30px;
+          }
+          
+          .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #e0e0e0;
+          }
+          
+          .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+          }
+          
+          .info-item {
+            margin-bottom: 10px;
+          }
+          
+          .info-label {
+            font-weight: 500;
+            color: #7f8c8d;
+            margin-bottom: 3px;
+            font-size: 14px;
+          }
+          
+          .info-value {
+            font-size: 15px;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+          }
+          
+          th {
+            background-color: #f5f5f5;
+            text-align: left;
+            padding: 10px 15px;
+            font-weight: 500;
+            font-size: 14px;
+          }
+          
+          td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: top;
+          }
+          
+          .total-row {
+            font-weight: 500;
+            background-color: #f9f9f9;
+          }
+          
+          .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+          }
+          
+          .signature-block {
+            width: 250px;
+            text-align: center;
+          }
+          
+          .signature-line {
+            border-top: 1px solid #333;
+            margin: 40px auto 10px;
+            width: 200px;
+          }
+          
+          .signature-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+          }
+          
+          .signature-position {
+            color: #7f8c8d;
+            font-size: 14px;
+          }
+          
+          .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+          }
+          
+          .stamp {
+            position: absolute;
+            right: 50px;
+            bottom: 100px;
+            width: 150px;
+            height: 150px;
+            transform: rotate(15deg);
+          }
+          
+          @media print {
+            body {
+              background: none;
+              padding: 0;
+            }
+            
+            .document {
+              box-shadow: none;
+              padding: 0;
+            }
+            
+            .no-print {
+              display: none;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="document">
+          <div class="header">
+            <div class="logo">EUROBULD</div>
+            <div class="document-title">Договор на выполнение строительных работ</div>
+            <div class="document-number">№ ${order['Номер заказа']} от ${order['Дата начала']}</div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">1. Информация о клиенте</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">ФИО</div>
+                <div class="info-value">${order['Клиент ФИО']}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Телефон</div>
+                <div class="info-value">${order['Телефон клиента']}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Адрес</div>
+                <div class="info-value">${order['Адрес клиента']}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">2. Информация о заказе</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Услуга</th>
+                  <th>Дата начала</th>
+                  <th>Дата завершения</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${order['Услуга']}</td>
+                  <td>${order['Дата начала']}</td>
+                  <td>${order['Дата завершения'] || 'В процессе'}</td>
+                  <td>${order['Статус']}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">3. Финансовая информация</div>
+            <table>
+              <tr class="total-row">
+                <td colspan="3">Итоговая сумма</td>
+                <td>${order['Итоговая сумма']} руб.</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">4. Ответственные лица</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">Менеджер</div>
+                <div class="info-value">${order['Менеджер ФИО']}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Прораб</div>
+                <div class="info-value">${order['Прораб ФИО']}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="signatures">
+            <div class="signature-block">
+              <div class="signature-line"></div>
+              <div class="signature-name">${order['Клиент ФИО']}</div>
+              <div class="signature-position">Клиент</div>
+            </div>
+            
+            <div class="signature-block">
+              <div class="signature-line"></div>
+              <div class="signature-name">${order['Менеджер ФИО']}</div>
+              <div class="signature-position">Менеджер</div>
+            </div>
+          </div>
+          
+          <div class="stamp">
+            <svg width="150" height="150" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <!-- Внешний круг с пунктиром -->
+              <circle cx="100" cy="100" r="95" stroke="#0000C0" stroke-width="3" stroke-dasharray="8,4" fill="none"/>
+              
+              <!-- Внутренний сплошной круг -->
+              <circle cx="100" cy="100" r="80" stroke="#0000C0" stroke-width="2" fill="none"/>
+              
+              <!-- Верхний текст по дуге (название) -->
+              <path id="topText" d="M30 100 A70 70 0 0 1 170 100" fill="none"/>
+              <text font-family="Arial" font-size="14" font-weight="bold" fill="#0000C0" text-anchor="middle">
+                <textPath href="#topText" startOffset="50%">ООО "EUROBULD"</textPath>
+              </text>
+              
+              <!-- Нижний текст по дуге (ИНН) -->
+              <path id="bottomText" d="M170 100 A70 70 0 0 1 30 100" fill="none"/>
+              <text font-family="Arial" font-size="12" fill="#0000C0" text-anchor="middle">
+                <textPath href="#bottomText" startOffset="50%">ИНН 123456789012</textPath>
+              </text>
+              
+              <!-- Центральная звезда -->
+              <path d="M100 40 L110 60 L130 60 L115 75 L125 95 L100 85 L75 95 L85 75 L70 60 L90 60 Z" fill="#0000C0"/>
+              
+              <!-- Под звездой - ОГРН -->
+              <text x="100" y="120" font-family="Arial" font-size="12" fill="#0000C0" text-anchor="middle">ОГРН 1234567890123</text>
+              
+              <!-- В самом низу - город -->
+              <text x="100" y="140" font-family="Arial" font-size="12" fill="#0000C0" text-anchor="middle">г. Москва</text>
+              
+              <!-- Защитный микротекст -->
+              <circle cx="100" cy="100" r="70" stroke="#0000C0" stroke-width="0.5" stroke-dasharray="1,1" fill="none"/>
+              <path id="microText" d="M35 100 A65 65 0 0 1 165 100" fill="none"/>
+              <text font-family="Arial" font-size="5" fill="#0000C0">
+                <textPath href="#microText" startOffset="0">* ООО EUROBULD * ООО EUROBULD * ООО EUROBULD *</textPath>
+              </text>
+            </svg>
+          </div>
+          
+          <div class="footer">
+            <p>Дата печати: ${new Date().toLocaleDateString('ru-RU')}</p>
+            <p>EUROBULD © ${new Date().getFullYear()}</p>
+          </div>
+        </div>
+        
+        <div class="no-print" style="text-align: center; margin-top: 20px; padding: 20px;">
+          <button onclick="window.print()" style="
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+          ">Печать</button>
+          
+          <button onclick="window.close()" style="
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+          ">Закрыть</button>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 1000);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    res.send(html);
+  } catch (err) {
+    console.error('Ошибка при формировании печатной формы:', err);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
 
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
