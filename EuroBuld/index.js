@@ -1,4 +1,4 @@
-  const express = require('express');
+const express = require('express');
   const session = require('express-session');
   const mssql = require('mssql');
   const dotenv = require('dotenv');
@@ -267,39 +267,39 @@
   });
 
   // Регистрация нового пользователя
-app.post('/register', async (req, res) => {
-  const { error, value } = validationSchemas.register.validate(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.details[0].message });
-  }
-
-  const { Email, Password } = value;
-
-  try {
-    // Проверяем, существует ли уже пользователь с таким email
-    const userCheck = await app.locals.db.request()
-      .input('Email', mssql.VarChar, Email)
-      .query('SELECT 1 FROM Users WHERE Email = @Email');
-
-    if (userCheck.recordset.length > 0) {
-      return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
+  app.post('/register', async (req, res) => {
+    const { error, value } = validationSchemas.register.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
     }
 
-    // Создаем нового пользователя
-    await app.locals.db.request()
-      .input('Email', mssql.VarChar, Email)
-      .input('Password', mssql.VarChar, Password)
-      .query(`
-        INSERT INTO Users (Email, Password)
-        VALUES (@Email, @Password)
-      `);
+    const { Email, Password } = value;
 
-    res.status(201).json({ message: 'Регистрация успешна' });
-  } catch (error) {
-    console.error('Ошибка при регистрации:', error);
-    res.status(500).json({ message: 'Ошибка сервера при регистрации' });
-  }
-});
+    try {
+      // Проверяем, существует ли уже пользователь с таким email
+      const userCheck = await app.locals.db.request()
+        .input('Email', mssql.VarChar, Email)
+        .query('SELECT 1 FROM Users WHERE Email = @Email');
+
+      if (userCheck.recordset.length > 0) {
+        return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
+      }
+
+      // Создаем нового пользователя
+      await app.locals.db.request()
+        .input('Email', mssql.VarChar, Email)
+        .input('Password', mssql.VarChar, Password)
+        .query(`
+          INSERT INTO Users (Email, Password)
+          VALUES (@Email, @Password)
+        `);
+
+      res.status(201).json({ message: 'Регистрация успешна' });
+    } catch (error) {
+      console.error('Ошибка при регистрации:', error);
+      res.status(500).json({ message: 'Ошибка сервера при регистрации' });
+    }
+  });
 
   // Проверка авторизации пользователя
   app.get('/api/check_auth', async (req, res) => {
@@ -470,126 +470,126 @@ app.post('/register', async (req, res) => {
   });
 
   //Выборка таблицы customer_orders в datagrid(админ панель)
-app.get('/api/customer_orders', async (req, res) => {
-  try {
-    const result = await app.locals.db.request().query(`
-      SELECT 
-        co.ID_Customers_orders, 
-        u.First_name + ' ' + ISNULL(u.Last_name, '') + ' ' + ISNULL(u.Patronymic, '') AS Client_FullName,
-        s.Item_Name AS Service_Name,
-        co.Order_Date,
-        co.Status
-      FROM Customer_orders co
-      LEFT JOIN Users u ON co.ID_Users = u.ID_Users
-      LEFT JOIN Service s ON co.ID_Service = s.ID_Service
-    `);
-    res.json(result.recordset);
-  } catch (err) {
-    console.error('Ошибка при получении customer_orders:', err);
-    res.status(500).send('Ошибка сервера');
-  }
-});
-
-app.get('/api/processed_customer_orders/:id', async (req, res) => {
-  try {
-    const result = await app.locals.db.request()
-      .input('id', mssql.Int, req.params.id)
-      .query(`
+  app.get('/api/customer_orders', async (req, res) => {
+    try {
+      const result = await app.locals.db.request().query(`
         SELECT 
-          pco.ID_Processed_customer_orders,
-          pco.ID_Customer_orders,
-          pco.ID_Staff,
-          pco.ID_Foreman,
-          pco.ID_Status_Orders,
-          CONVERT(varchar, pco.Date_Start, 23) AS Date_Start,
-          CONVERT(varchar, pco.Date_Ending, 23) AS Date_Ending,
-          pco.Final_sum,
-          so.Name_Status
-        FROM Processed_customer_orders pco
-        LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
-        WHERE pco.ID_Processed_customer_orders = @id
+          co.ID_Customers_orders, 
+          u.First_name + ' ' + ISNULL(u.Last_name, '') + ' ' + ISNULL(u.Patronymic, '') AS Client_FullName,
+          s.Item_Name AS Service_Name,
+          co.Order_Date,
+          co.Status
+        FROM Customer_orders co
+        LEFT JOIN Users u ON co.ID_Users = u.ID_Users
+        LEFT JOIN Service s ON co.ID_Service = s.ID_Service
       `);
-    
-    if (result.recordset.length === 0) {
-      return res.status(404).send('Заказ не найден');
+      res.json(result.recordset);
+    } catch (err) {
+      console.error('Ошибка при получении customer_orders:', err);
+      res.status(500).send('Ошибка сервера');
     }
-    
-    res.json(result.recordset[0]);
-  } catch (err) {
-    console.error('Ошибка при получении заказа:', err);
-    res.status(500).send('Ошибка сервера');
-  }
-});
+  });
 
-app.put('/api/processed_customer_orders/:id', async (req, res) => {
-  const { id } = req.params;
-  const data = req.body;
+  app.get('/api/processed_customer_orders/:id', async (req, res) => {
+    try {
+      const result = await app.locals.db.request()
+        .input('id', mssql.Int, req.params.id)
+        .query(`
+          SELECT 
+            pco.ID_Processed_customer_orders,
+            pco.ID_Customer_orders,
+            pco.ID_Staff,
+            pco.ID_Foreman,
+            pco.ID_Status_Orders,
+            CONVERT(varchar, pco.Date_Start, 23) AS Date_Start,
+            CONVERT(varchar, pco.Date_Ending, 23) AS Date_Ending,
+            pco.Final_sum,
+            so.Name_Status
+          FROM Processed_customer_orders pco
+          LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+          WHERE pco.ID_Processed_customer_orders = @id
+        `);
+      
+      if (result.recordset.length === 0) {
+        return res.status(404).send('Заказ не найден');
+      }
+      
+      res.json(result.recordset[0]);
+    } catch (err) {
+      console.error('Ошибка при получении заказа:', err);
+      res.status(500).send('Ошибка сервера');
+    }
+  });
 
-  try {
-    await app.locals.db.request()
-      .input('ID_Status_Orders', mssql.Int, data.ID_Status_Orders)
-      .input('Date_Start', mssql.Date, data.Date_Start)
-      .input('Date_Ending', mssql.Date, data.Date_Ending || null)
-      .input('Final_sum', mssql.Decimal(10,2), data.Final_sum)
-      .input('id', mssql.Int, id)
-      .query(`
-        UPDATE Processed_customer_orders 
-        SET 
-          ID_Status_Orders = @ID_Status_Orders,
-          Date_Start = @Date_Start,
-          Date_Ending = @Date_Ending,
-          Final_sum = @Final_sum
-        WHERE ID_Processed_customer_orders = @id
+  //Выборка таблицы processed_customer_orders в datagrid(админ панель)
+  app.put('/api/processed_customer_orders/:id', async (req, res) => {
+    const { id } = req.params;
+    const data = req.body;
+
+    try {
+      await app.locals.db.request()
+        .input('ID_Status_Orders', mssql.Int, data.ID_Status_Orders)
+        .input('Date_Start', mssql.Date, data.Date_Start)
+        .input('Date_Ending', mssql.Date, data.Date_Ending || null)
+        .input('Final_sum', mssql.Decimal(10,2), data.Final_sum)
+        .input('id', mssql.Int, id)
+        .query(`
+          UPDATE Processed_customer_orders 
+          SET 
+            ID_Status_Orders = @ID_Status_Orders,
+            Date_Start = @Date_Start,
+            Date_Ending = @Date_Ending,
+            Final_sum = @Final_sum
+          WHERE ID_Processed_customer_orders = @id
+        `);
+
+      res.status(200).json({ message: 'Запись обновлена' });
+    } catch (error) {
+      console.error('Ошибка при обновлении:', error);
+      res.status(500).send('Ошибка сервера');
+    }
+  });
+
+  //Выборка таблицы status_Orders в datagrid(админ панель)
+  app.get('/api/status_Orders', async (req, res) => {
+    try {
+      const result = await app.locals.db.request().query(`
+        SELECT ID_Status_Orders, Name_Status
+        FROM Status_Orders
       `);
+      res.json(result.recordset);
+    } catch (err) {
+      console.error('Ошибка при получении статусов:', err);
+      res.status(500).send('Ошибка сервера');
+    }
+  });
 
-    res.status(200).json({ message: 'Запись обновлена' });
-  } catch (error) {
-    console.error('Ошибка при обновлении:', error);
-    res.status(500).send('Ошибка сервера');
-  }
-});
-
-
-
-app.get('/api/status_Orders', async (req, res) => {
-  try {
-    const result = await app.locals.db.request().query(`
-      SELECT ID_Status_Orders, Name_Status
-      FROM Status_Orders
-    `);
-    res.json(result.recordset);
-  } catch (err) {
-    console.error('Ошибка при получении статусов:', err);
-    res.status(500).send('Ошибка сервера');
-  }
-});
   //Выборка таблицы processed_customer_orders в datagrid(админ панель)
-  //Выборка таблицы processed_customer_orders в datagrid(админ панель)
-app.get('/api/processed_customer_orders', async (req, res) => {
-  try {
-    const result = await app.locals.db.request().query(`
-      SELECT 
-        pco.ID_Processed_customer_orders, 
-        u.First_name + ' ' + ISNULL(u.Last_name, '') + ' ' + ISNULL(u.Patronymic, '') AS Client_FullName,
-        st.First_name + ' ' + ISNULL(st.Last_name, '') + ' ' + ISNULL(st.Patronymic, '') AS Staff_FullName,
-        f.First_Name + ' ' + ISNULL(f.Last_Name, '') + ' ' + ISNULL(f.Patronymic, '') AS Foreman_FullName,
-        so.Name_Status, 
-        pco.Date_Start, 
-        pco.Date_Ending,  
-        pco.Final_sum
-      FROM Processed_customer_orders pco
-      LEFT JOIN Customer_orders co ON pco.ID_Customer_orders = co.ID_Customers_orders
-      LEFT JOIN Users u ON co.ID_Users = u.ID_Users
-      LEFT JOIN Staff st ON pco.ID_Staff = st.ID_Staff
-      LEFT JOIN Foremen f ON pco.ID_Foreman = f.ID_Foreman
-      LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
-    `);
-    res.json(result.recordset);
-  } catch (err) {
-    console.error('Ошибка при получении processed_customer_orders:', err);
-    res.status(500).send('Ошибка сервера');
-  }
-});
+  app.get('/api/processed_customer_orders', async (req, res) => {
+    try {
+      const result = await app.locals.db.request().query(`
+        SELECT 
+          pco.ID_Processed_customer_orders, 
+          u.First_name + ' ' + ISNULL(u.Last_name, '') + ' ' + ISNULL(u.Patronymic, '') AS Client_FullName,
+          st.First_name + ' ' + ISNULL(st.Last_name, '') + ' ' + ISNULL(st.Patronymic, '') AS Staff_FullName,
+          f.First_Name + ' ' + ISNULL(f.Last_Name, '') + ' ' + ISNULL(f.Patronymic, '') AS Foreman_FullName,
+          so.Name_Status, 
+          pco.Date_Start, 
+          pco.Date_Ending,  
+          pco.Final_sum
+        FROM Processed_customer_orders pco
+        LEFT JOIN Customer_orders co ON pco.ID_Customer_orders = co.ID_Customers_orders
+        LEFT JOIN Users u ON co.ID_Users = u.ID_Users
+        LEFT JOIN Staff st ON pco.ID_Staff = st.ID_Staff
+        LEFT JOIN Foremen f ON pco.ID_Foreman = f.ID_Foreman
+        LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+      `);
+      res.json(result.recordset);
+    } catch (err) {
+      console.error('Ошибка при получении processed_customer_orders:', err);
+      res.status(500).send('Ошибка сервера');
+    }
+  });
 
   //Выборка таблицы foremen в datagrid(админ панель)
   app.get('/api/foremen', async (req, res) => {
@@ -624,43 +624,48 @@ app.get('/api/processed_customer_orders', async (req, res) => {
     const { table } = req.params;
     const data = req.body;
     const schema = validationSchemas[table.toLowerCase()];
-
+  
+    // Удаляем id, если есть
     delete data.id;
-
+  
+    // Валидация схемы, если задана
     if (schema) {
       const { error } = schema.validate(data);
       if (error) {
         return res.status(400).send(error.details[0].message); 
       }
     }
-
+  
     try {
-      let query = `INSERT INTO ${table} (`;
+      // Обработка base64-изображения
+      if ('ImageBase64' in data) {
+        data.Image = Buffer.from(data.ImageBase64, 'base64');
+        delete data.ImageBase64;
+      }
+  
+      // Формируем SQL-запрос
       let columns = [], values = [];
-
       Object.keys(data).forEach(key => {
-        if (key !== 'id') {
-          columns.push(key);
-          values.push(`@${key}`);
-        }
+        columns.push(key);
+        values.push(`@${key}`);
       });
-
-      query += columns.join(', ') + ') VALUES (' + values.join(', ') + ')';
-
+  
+      let query = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.join(', ')})`;
+  
       const request = app.locals.db.request();
       Object.keys(data).forEach(key => {
-        if (key !== 'id') {
-          request.input(key, data[key]);
-        }
+        request.input(key, data[key]);
       });
-
+  
       const result = await request.query(query);
       res.status(201).json({ message: 'Запись добавлена', result });
+  
     } catch (error) {
       console.error('Ошибка при добавлении:', error);
       res.status(500).send('Ошибка при добавлении записи');
     }
   });
+  
 
   const idFields = {
     users: 'ID_Users',
@@ -679,9 +684,11 @@ app.get('/api/processed_customer_orders', async (req, res) => {
     const { table, id } = req.params;
     const data = req.body;
     const idField = idFields[table.toLowerCase()] || 'ID';
-
+  
+    // Удаляем id, если есть в данных
     delete data.id;
-
+  
+    // Валидация данных с использованием Joi
     const schema = validationSchemas[table.toLowerCase()];
     if (schema) {
       const { error } = schema.validate(data);
@@ -689,24 +696,32 @@ app.get('/api/processed_customer_orders', async (req, res) => {
         return res.status(400).send(error.details[0].message);
       }
     }
-
+  
+    // Обработка base64 изображения
+    if ('ImageBase64' in data) {
+      data.Image = Buffer.from(data.ImageBase64, 'base64');
+      delete data.ImageBase64;
+    }
+  
     try {
+      // Формируем SQL запрос на обновление
       let query = `UPDATE ${table} SET `;
       let params = [];
-
+  
       Object.keys(data).forEach((key, index) => {
         if (key !== 'id') {
           query += `${key} = @${key}${index < Object.keys(data).length - 1 ? ',' : ''}`;
           params.push({ name: key, value: data[key] });
         }
       });
-
+  
       query += ` WHERE ${idField} = @id`;
-
+  
       const request = app.locals.db.request();
       params.forEach(param => request.input(param.name, param.value));
       request.input('id', mssql.Int, id);
-
+  
+      // Выполняем запрос
       const result = await request.query(query);
       res.status(200).json(result);
     } catch (error) {
@@ -714,24 +729,55 @@ app.get('/api/processed_customer_orders', async (req, res) => {
       res.status(500).send('Ошибка при обновлении записи');
     }
   });
-
+  
   //Удаление записи в таблицы datagrid(админ панель)
   app.delete('/api/:table/:id', async (req, res) => {
     const { table, id } = req.params;
     const idField = idFields[table.toLowerCase()] || 'ID';
-
+  
     try {
+      const checkQuery = `SELECT COUNT(*) AS count FROM Customer_orders WHERE ID_Service = @id`;
       const request = app.locals.db.request();
       request.input('id', mssql.Int, id);
+  
+      const result = await request.query(checkQuery);
+  
+      if (result.recordset[0].count > 0) {
+        return res.status(400).send('Невозможно удалить запись, так как она используется в заказах.');
+      }
+  
+      // Удаляем запись из таблицы Service
+      const deleteQuery = `DELETE FROM ${table} WHERE ${idField} = @id`;
+      await request.query(deleteQuery);
+  
+      res.status(200).send('Запись удалена');
+    } catch (err) {
+      console.error('Ошибка при удалении:', err);
+      res.status(500).send('Ошибка сервера');
+    }
 
-      await request.query(`DELETE FROM ${table} WHERE ${idField} = @id`);
-      res.send('Удалено');
+    try {
+      const checkQuery = `SELECT COUNT(*) AS count FROM Requests WHERE ID_Service = @id`;
+      const request = app.locals.db.request();
+      request.input('id', mssql.Int, id);
+  
+      const result = await request.query(checkQuery);
+  
+      if (result.recordset[0].count > 0) {
+        return res.status(400).send('Невозможно удалить запись, так как она используется в заявках.');
+      }
+  
+      // Удаляем запись из таблицы Service
+      const deleteQuery = `DELETE FROM ${table} WHERE ${idField} = @id`;
+      await request.query(deleteQuery);
+  
+      res.status(200).send('Запись удалена');
     } catch (err) {
       console.error('Ошибка при удалении:', err);
       res.status(500).send('Ошибка сервера');
     }
   });
-
+  
   //Вывод товаров на страницу Service
   app.get('/api/service', async (req, res) => {
     try {
@@ -946,13 +992,11 @@ app.get('/api/processed_customer_orders', async (req, res) => {
     }
   });
 
-  // Маршрут создания заказа
   app.post('/api/customer_orders', async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).send('Пользователь не авторизован');
     }
 
-    // Добавить проверку наличия обязательных полей
     const { ID_Service, Order_Date, Status } = req.body;
     const ID_Users = req.session.userId;
     const data = req.body;
@@ -1002,7 +1046,7 @@ app.get('/api/processed_customer_orders', async (req, res) => {
         console.error('Ошибка при получении доступных заказов:', err);
         res.status(500).send('Ошибка сервера');
     }
-});
+  });
 
   // Маршрут для получения списка начальников
   app.get('/api/foremen_list', async (req, res) => {
@@ -1022,7 +1066,6 @@ app.get('/api/processed_customer_orders', async (req, res) => {
     const { ID_Customer_orders } = req.body;
     
     try {
-      // Проверяем существование заказа
       const orderCheck = await app.locals.db.request()
         .input('orderId', mssql.Int, ID_Customer_orders)
         .query('SELECT 1 FROM Customer_orders WHERE ID_Customers_orders = @orderId');
@@ -1108,7 +1151,7 @@ app.get('/api/processed_customer_orders', async (req, res) => {
         console.error('Ошибка при получении заказов сотрудника:', err);
         res.status(500).send('Ошибка сервера');
     }
-});
+  });
 
   app.get('/api/processed_customer_orders/:id', async (req, res) => {
     try {
@@ -1146,7 +1189,7 @@ app.get('/api/processed_customer_orders', async (req, res) => {
         console.error('Ошибка при получении заказа:', err);
         res.status(500).send('Ошибка сервера');
     }
-});
+  });
 
   // Обновление обработанного заказа
   app.put('/api/processed_customer_orders/:id', async (req, res) => {
@@ -2326,6 +2369,144 @@ app.get('/api/print_order/:id', async (req, res) => {
     res.send(html);
   } catch (err) {
     console.error('Ошибка при формировании печатной формы:', err);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Общая статистика - исправленный запрос
+async function getGeneralStatsData(period) {
+  let dateCondition = '';
+  
+  switch (period) {
+    case 'day':
+      dateCondition = 'WHERE CAST(GETDATE() AS DATE) = CAST(CreationDate AS DATE)';
+      break;
+    case 'week':
+      dateCondition = 'WHERE CreationDate >= DATEADD(WEEK, -1, GETDATE())';
+      break;
+    case 'month':
+      dateCondition = 'WHERE CreationDate >= DATEADD(MONTH, -1, GETDATE())';
+      break;
+    case 'year':
+      dateCondition = 'WHERE CreationDate >= DATEADD(YEAR, -1, GETDATE())';
+      break;
+    case 'all':
+    default:
+      dateCondition = '';
+  }
+  
+  const result = await app.locals.db.request().query(`
+    SELECT 
+      (SELECT COUNT(*) FROM Users ${dateCondition.replace('CreationDate', 'GETDATE()')}) AS Users,
+      (SELECT COUNT(*) FROM Customer_orders ${dateCondition.replace('CreationDate', 'Order_Date')}) AS Orders,
+      (SELECT COUNT(*) FROM Processed_customer_orders ${dateCondition.replace('CreationDate', 'Date_Start')}) AS Processed,
+      (SELECT ISNULL(SUM(TRY_CONVERT(DECIMAL(10,2), Final_sum)), 0) FROM Processed_customer_orders ${dateCondition.replace('CreationDate', 'Date_Start')}) AS Revenue,
+      (SELECT COUNT(*) FROM Staff ${dateCondition.replace('CreationDate', 'Date_employment')}) AS Staff,
+      (SELECT COUNT(*) FROM Requests ${dateCondition.replace('CreationDate', 'Request_Date')}) AS Requests
+  `);
+  
+  return result.recordset[0];
+}
+
+// Эффективность сотрудников - исправленный запрос
+app.get('/api/reports/staff-performance', async (req, res) => {
+  const { period } = req.query;
+  let dateCondition = '';
+  
+  switch (period) {
+    case 'month':
+      dateCondition = 'AND pco.Date_Start >= DATEADD(MONTH, -1, GETDATE())';
+      break;
+    case 'quarter':
+      dateCondition = 'AND pco.Date_Start >= DATEADD(QUARTER, -1, GETDATE())';
+      break;
+    case 'year':
+      dateCondition = 'AND pco.Date_Start >= DATEADD(YEAR, -1, GETDATE())';
+      break;
+  }
+  
+  try {
+    const result = await app.locals.db.request().query(`
+      SELECT 
+        s.ID_Staff,
+        s.First_name + ' ' + s.Last_name + ' ' + ISNULL(s.Patronymic, '') AS StaffName,
+        r.roll_name AS Role,
+        COUNT(pco.ID_Processed_customer_orders) AS OrderCount,
+        AVG(DATEDIFF(DAY, pco.Date_Start, ISNULL(pco.Date_Ending, GETDATE()))) AS AvgDays,
+        SUM(TRY_CONVERT(DECIMAL(10,2), pco.Final_sum)) AS Revenue,
+        CASE 
+          WHEN COUNT(pco.ID_Processed_customer_orders) = 0 THEN 0
+          ELSE 100 * SUM(CASE WHEN so.Name_Status = 'Завершен' THEN 1 ELSE 0 END) / COUNT(pco.ID_Processed_customer_orders)
+        END AS Efficiency
+      FROM Staff s
+      LEFT JOIN Role r ON s.ID_Role = r.ID_Role
+      LEFT JOIN Processed_customer_orders pco ON s.ID_Staff = pco.ID_Staff
+      LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+      WHERE pco.ID_Processed_customer_orders IS NOT NULL ${dateCondition}
+      GROUP BY s.ID_Staff, s.First_name, s.Last_name, s.Patronymic, r.roll_name
+      ORDER BY Revenue DESC
+    `);
+    
+    res.json(result.recordset.map(row => ({
+      id: row.ID_Staff,
+      name: row.StaffName,
+      role: row.Role,
+      orders: row.OrderCount,
+      avgDays: Math.round(row.AvgDays) || 0,
+      revenue: row.Revenue || 0,
+      efficiency: Math.round(row.Efficiency) || 0
+    })));
+  } catch (error) {
+    console.error('Ошибка при получении эффективности сотрудников:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+});
+
+// Финансовые показатели - исправленный запрос
+app.get('/api/reports/finance', async (req, res) => {
+  const { period } = req.query;
+  let groupBy, dateFormat;
+  
+  switch (period) {
+    case 'month':
+      groupBy = 'YEAR(pco.Date_Start), MONTH(pco.Date_Start)';
+      dateFormat = 'YYYY-MM';
+      break;
+    case 'quarter':
+      groupBy = 'YEAR(pco.Date_Start), DATEPART(QUARTER, pco.Date_Start)';
+      dateFormat = 'YYYY-Q';
+      break;
+    case 'year':
+      groupBy = 'YEAR(pco.Date_Start)';
+      dateFormat = 'YYYY';
+      break;
+    default:
+      groupBy = 'YEAR(pco.Date_Start), MONTH(pco.Date_Start)';
+      dateFormat = 'YYYY-MM';
+  }
+  
+  try {
+    const result = await app.locals.db.request().query(`
+      SELECT 
+        FORMAT(MIN(pco.Date_Start), '${dateFormat}') AS Period,
+        SUM(TRY_CONVERT(DECIMAL(10,2), pco.Final_sum)) AS Revenue,
+        SUM(TRY_CONVERT(DECIMAL(10,2), r.salary)) AS Expenses,
+        SUM(TRY_CONVERT(DECIMAL(10,2), pco.Final_sum)) - SUM(TRY_CONVERT(DECIMAL(10,2), r.salary)) AS Profit
+      FROM Processed_customer_orders pco
+      LEFT JOIN Staff s ON pco.ID_Staff = s.ID_Staff
+      LEFT JOIN Role r ON s.ID_Role = r.ID_Role
+      GROUP BY ${groupBy}
+      ORDER BY MIN(pco.Date_Start)
+    `);
+    
+    const labels = result.recordset.map(row => row.Period);
+    const revenue = result.recordset.map(row => row.Revenue || 0);
+    const expenses = result.recordset.map(row => row.Expenses || 0);
+    const profit = result.recordset.map(row => row.Profit || 0);
+    
+    res.json({ labels, revenue, expenses, profit });
+  } catch (error) {
+    console.error('Ошибка при получении финансовых показателей:', error);
     res.status(500).send('Ошибка сервера');
   }
 });

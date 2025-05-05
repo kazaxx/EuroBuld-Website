@@ -2,9 +2,11 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Админ-панель | Отчеты</title>
+  <title>Админ-панель | Расширенные отчеты</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
     :root {
       --primary-color: #4f46e5;
@@ -35,15 +37,23 @@
       color: #fff;
       padding: 1rem 2rem;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .topbar-actions {
+      display: flex;
+      gap: 1rem;
     }
 
     .topbar a {
       text-decoration: none;
       color: #fff;
       font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .container {
@@ -66,6 +76,8 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
 
     .section-header h2 {
@@ -73,12 +85,40 @@
       color: var(--text-dark);
     }
 
-    .section-header select {
+    .section-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .section-header select, 
+    .section-header input,
+    .section-header button {
       padding: 0.5rem 1rem;
       border: 1px solid var(--border-light);
       border-radius: 8px;
       background: var(--bg-light);
       font-size: 1rem;
+    }
+
+    .section-header button {
+      background: var(--primary-color);
+      color: white;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+
+    .section-header button:hover {
+      background: var(--secondary-color);
+    }
+
+    .section-header button.secondary {
+      background: #6b7280;
+    }
+
+    .section-header button.danger {
+      background: #ef4444;
     }
 
     .grid {
@@ -120,6 +160,7 @@
     .chart-container {
       position: relative;
       height: 300px;
+      margin-bottom: 1rem;
     }
 
     .date-filters {
@@ -127,6 +168,7 @@
       gap: 1rem;
       align-items: center;
       margin-bottom: 1.5rem;
+      flex-wrap: wrap;
     }
 
     .date-filters input, .date-filters button {
@@ -217,51 +259,222 @@
       color: #991b1b;
     }
 
+    .report-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .detailed-report {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .detailed-report h3 {
+      margin-bottom: 1rem;
+      color: var(--text-dark);
+    }
+
+    .detailed-report p {
+      margin-bottom: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    .detailed-report .highlight {
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+
+    .detailed-report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .detailed-report-card {
+      background: var(--bg-light);
+      padding: 1rem;
+      border-radius: 8px;
+    }
+
+    .detailed-report-card h4 {
+      margin-bottom: 0.5rem;
+      color: var(--text-dark);
+    }
+
     @keyframes fadeIn {
       from {opacity: 0; transform: translateY(20px);}
       to {opacity: 1; transform: translateY(0);}
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .date-filters {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .section-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
     }
   </style>
 </head>
 <body>
 
   <div class="topbar">
-    <a href="index.html"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+    <div>
+      <h1><i class="fas fa-chart-line"></i> Отчеты EuroBuld</h1>
+    </div>
+    <div class="topbar-actions">
+      <a href="#" onclick="exportAllReports()"><i class="fas fa-file-pdf"></i> Экспорт всех отчетов</a>
+      <a href="index.html"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+    </div>
   </div>
+
+  <div class="container">
     <div class="section">
       <div class="section-header">
-        <h2>Динамика заказов</h2>
-        <select id="ordersChartType" onchange="renderOrdersChart()">
-          <option value="line">Линия</option>
-          <option value="bar">Столбцы</option>
-        </select>
+        <h2><i class="fas fa-tachometer-alt"></i> Общая статистика</h2>
+        <div class="section-actions">
+          <select id="timePeriod" onchange="loadGeneralStats()">
+            <option value="day">Сегодня</option>
+            <option value="week">Неделя</option>
+            <option value="month" selected>Месяц</option>
+            <option value="quarter">Квартал</option>
+            <option value="year">Год</option>
+            <option value="all">Все время</option>
+          </select>
+          <button onclick="exportGeneralStats()"><i class="fas fa-file-export"></i> Экспорт</button>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="label">Пользователи</div>
+          <div class="value" id="usersCount">0</div>
+          <div class="change" id="usersChange">0%</div>
+        </div>
+        <div class="card">
+          <div class="label">Заказы</div>
+          <div class="value" id="ordersCount">0</div>
+          <div class="change" id="ordersChange">0%</div>
+        </div>
+        <div class="card">
+          <div class="label">Обработано</div>
+          <div class="value" id="processedCount">0</div>
+          <div class="change" id="processedChange">0%</div>
+        </div>
+        <div class="card">
+          <div class="label">Выручка</div>
+          <div class="value" id="revenueCount">0 ₽</div>
+          <div class="change" id="revenueChange">0%</div>
+        </div>
+        <div class="card">
+          <div class="label">Сотрудники</div>
+          <div class="value" id="staffCount">0</div>
+          <div class="change" id="staffChange">0%</div>
+        </div>
+        <div class="card">
+          <div class="label">Заявки</div>
+          <div class="value" id="requestsCount">0</div>
+          <div class="change" id="requestsChange">0%</div>
+        </div>
+      </div>
+      
+      <div class="detailed-report">
+        <h3>Детализированная статистика</h3>
+        <div id="generalStatsDetails"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <h2><i class="fas fa-shopping-cart"></i> Динамика заказов</h2>
+        <div class="section-actions">
+          <select id="ordersChartType" onchange="renderOrdersChart()">
+            <option value="line">Линия</option>
+            <option value="bar">Столбцы</option>
+            <option value="pie">Круговая</option>
+          </select>
+          <button onclick="exportOrdersChart()"><i class="fas fa-file-export"></i> Экспорт</button>
+        </div>
       </div>
       <div class="date-filters">
         <input type="date" id="startDate">
         <span>по</span>
         <input type="date" id="endDate">
         <button onclick="renderOrdersChart()">Применить</button>
+        <button onclick="setDefaultDateRange('month')">Месяц</button>
+        <button onclick="setDefaultDateRange('quarter')">Квартал</button>
+        <button onclick="setDefaultDateRange('year')">Год</button>
       </div>
       <div class="chart-container">
         <canvas id="ordersChart"></canvas>
+      </div>
+      
+      <div class="detailed-report">
+        <h3>Анализ динамики заказов</h3>
+        <div id="ordersAnalysis"></div>
       </div>
     </div>
 
     <div class="section">
       <div class="section-header">
-        <h2>Статистика по услугам</h2>
-        <select id="servicesPeriod" onchange="renderServicesChart()">
-          <option value="month">Месяц</option>
-          <option value="quarter">Квартал</option>
-          <option value="year">Год</option>
-          <option value="all">Все время</option>
-        </select>
+        <h2><i class="fas fa-concierge-bell"></i> Статистика по услугам</h2>
+        <div class="section-actions">
+          <select id="servicesPeriod" onchange="renderServicesChart()">
+            <option value="month">Месяц</option>
+            <option value="quarter">Квартал</option>
+            <option value="year">Год</option>
+            <option value="all">Все время</option>
+          </select>
+          <button onclick="exportServicesChart()"><i class="fas fa-file-export"></i> Экспорт</button>
+        </div>
       </div>
       <div class="chart-container">
         <canvas id="servicesChart"></canvas>
       </div>
+      
+      <div class="detailed-report">
+        <h3>Топ услуг</h3>
+        <div id="topServicesList"></div>
+      </div>
     </div>
 
+    <div class="section">
+      <div class="section-header">
+        <h2><i class="fas fa-users"></i> Эффективность сотрудников</h2>
+        <div class="section-actions">
+          <select id="performancePeriod" onchange="renderPerformanceChart()">
+            <option value="month">Месяц</option>
+            <option value="quarter">Квартал</option>
+            <option value="year">Год</option>
+            <option value="all">Все время</option>
+          </select>
+          <button onclick="exportPerformanceReport()"><i class="fas fa-file-export"></i> Экспорт</button>
+        </div>
+      </div>
+      
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('performanceChart')">График</div>
+        <div class="tab" onclick="switchTab('performanceTable')">Таблица</div>
+        <div class="tab" onclick="switchTab('performanceAnalysis')">Анализ</div>
+      </div>
+      
       <div class="tab-content active" id="performanceChart">
         <div class="chart-container">
           <canvas id="staffPerformanceChart"></canvas>
@@ -269,13 +482,16 @@
       </div>
 
       <div class="tab-content" id="performanceTable">
+        <div class="report-actions">
+          <button onclick="exportPerformanceTable()"><i class="fas fa-file-excel"></i> Экспорт таблицы</button>
+        </div>
         <table>
           <thead>
             <tr>
               <th>Сотрудник</th>
               <th>Должность</th>
               <th>Заказов</th>
-              <th>Сроки</th>
+              <th>Сроки (дн.)</th>
               <th>Выручка</th>
               <th>Эффективность</th>
             </tr>
@@ -285,15 +501,49 @@
           </tbody>
         </table>
       </div>
+      
+      <div class="tab-content" id="performanceAnalysis">
+        <div class="detailed-report">
+          <h3>Анализ эффективности персонала</h3>
+          <div id="performanceAnalysisContent"></div>
+        </div>
+      </div>
     </div>
+    
     <div class="section">
       <div class="section-header">
-        <h2>Последние заказы</h2>
-        <select id="recentOrdersCount" onchange="loadRecentOrders()">
-          <option value="5">5</option>
-          <option value="10" selected>10</option>
-          <option value="20">20</option>
-        </select>
+        <h2><i class="fas fa-money-bill-wave"></i> Финансовые показатели</h2>
+        <div class="section-actions">
+          <select id="financePeriod" onchange="renderFinanceChart()">
+            <option value="month">По месяцам</option>
+            <option value="quarter">По кварталам</option>
+            <option value="year">По годам</option>
+          </select>
+          <button onclick="exportFinanceReport()"><i class="fas fa-file-export"></i> Экспорт</button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="financeChart"></canvas>
+      </div>
+      
+      <div class="detailed-report">
+        <h3>Финансовый анализ</h3>
+        <div id="financeAnalysis"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <h2><i class="fas fa-history"></i> Последние заказы</h2>
+        <div class="section-actions">
+          <select id="recentOrdersCount" onchange="loadRecentOrders()">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <button onclick="exportRecentOrders()"><i class="fas fa-file-export"></i> Экспорт</button>
+        </div>
       </div>
       <table>
         <thead>
@@ -311,23 +561,48 @@
         </tbody>
       </table>
     </div>
-
+    
+    <div class="section">
+      <div class="section-header">
+        <h2><i class="fas fa-file-alt"></i> Генерация отчетов</h2>
+      </div>
+      <div class="detailed-report-grid">
+        <div class="detailed-report-card">
+          <h4>Полный отчет</h4>
+          <p>Сгенерируйте полный отчет по всем показателям за выбранный период.</p>
+          <button onclick="generateFullReport()" class="secondary">Создать PDF</button>
+        </div>
+        <div class="detailed-report-card">
+          <h4>Финансовый отчет</h4>
+          <p>Подробный финансовый отчет с графиками и таблицами.</p>
+          <button onclick="generateFinancialReport()" class="secondary">Создать PDF</button>
+        </div>
+        <div class="detailed-report-card">
+          <h4>Отчет по персоналу</h4>
+          <p>Анализ эффективности работы сотрудников.</p>
+          <button onclick="generateStaffReport()" class="secondary">Создать PDF</button>
+        </div>
+        <div class="detailed-report-card">
+          <h4>Отчет по услугам</h4>
+          <p>Популярность услуг и динамика продаж.</p>
+          <button onclick="generateServicesReport()" class="secondary">Создать PDF</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
     // Глобальные переменные для хранения данных и графиков
+    const { jsPDF } = window.jspdf;
     let ordersChart, servicesChart, staffPerformanceChart, financeChart;
     let generalStatsData = {};
+    let performanceData = [];
+    let financeData = {};
     
     // Инициализация страницы
     document.addEventListener('DOMContentLoaded', function() {
       // Установка дат по умолчанию для фильтров
-      const today = new Date();
-      const monthAgo = new Date();
-      monthAgo.setMonth(today.getMonth() - 1);
-      
-      document.getElementById('startDate').valueAsDate = monthAgo;
-      document.getElementById('endDate').valueAsDate = today;
+      setDefaultDateRange('month');
       
       // Загрузка всех отчетов
       loadGeneralStats();
@@ -337,6 +612,34 @@
       renderFinanceChart();
       loadRecentOrders();
     });
+    
+    // Установка диапазона дат
+    function setDefaultDateRange(range) {
+      const today = new Date();
+      const startDate = new Date();
+      
+      switch(range) {
+        case 'day':
+          startDate.setDate(today.getDate() - 1);
+          break;
+        case 'week':
+          startDate.setDate(today.getDate() - 7);
+          break;
+        case 'month':
+          startDate.setMonth(today.getMonth() - 1);
+          break;
+        case 'quarter':
+          startDate.setMonth(today.getMonth() - 3);
+          break;
+        case 'year':
+          startDate.setFullYear(today.getFullYear() - 1);
+          break;
+      }
+      
+      document.getElementById('startDate').valueAsDate = startDate;
+      document.getElementById('endDate').valueAsDate = today;
+      renderOrdersChart();
+    }
     
     // Загрузка общей статистики
     async function loadGeneralStats() {
@@ -371,8 +674,38 @@
         document.getElementById('requestsChange').textContent = formatChange(data.requests.change);
         document.getElementById('requestsChange').style.color = getChangeColor(data.requests.change);
         
+        // Детализированная статистика
+        const detailsHtml = `
+          <div class="detailed-report-grid">
+            <div class="detailed-report-card">
+              <h4>Пользователи</h4>
+              <p>Всего: <span class="highlight">${data.users.total}</span></p>
+              <p>Изменение: <span style="color: ${getChangeColor(data.users.change)}">${formatChange(data.users.change)}</span></p>
+            </div>
+            <div class="detailed-report-card">
+              <h4>Заказы</h4>
+              <p>Всего: <span class="highlight">${data.orders.total}</span></p>
+              <p>Завершено: <span class="highlight">${data.processed.total}</span></p>
+              <p>Конверсия: <span class="highlight">${data.orders.total > 0 ? Math.round((data.processed.total / data.orders.total) * 100) : 0}%</span></p>
+            </div>
+            <div class="detailed-report-card">
+              <h4>Финансы</h4>
+              <p>Выручка: <span class="highlight">${formatCurrency(data.revenue.total)}</span></p>
+              <p>Средний чек: <span class="highlight">${data.processed.total > 0 ? formatCurrency(data.revenue.total / data.processed.total) : formatCurrency(0)}</span></p>
+            </div>
+            <div class="detailed-report-card">
+              <h4>Персонал</h4>
+              <p>Сотрудников: <span class="highlight">${data.staff.total}</span></p>
+              <p>Заказов/сотр.: <span class="highlight">${data.staff.total > 0 ? Math.round(data.processed.total / data.staff.total) : 0}</span></p>
+              <p>Выручка/сотр.: <span class="highlight">${data.staff.total > 0 ? formatCurrency(data.revenue.total / data.staff.total) : formatCurrency(0)}</span></p>
+            </div>
+          </div>
+        `;
+        document.getElementById('generalStatsDetails').innerHTML = detailsHtml;
+        
       } catch (error) {
         console.error('Ошибка загрузки общей статистики:', error);
+        alert('Не удалось загрузить общую статистику');
       }
     }
     
@@ -419,17 +752,19 @@
                 label: 'Всего заказов',
                 data: data.totalOrders,
                 borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                backgroundColor: chartType === 'bar' ? 'rgba(52, 152, 219, 0.7)' : 'rgba(52, 152, 219, 0.1)',
                 borderWidth: 2,
-                tension: 0.1
+                tension: 0.1,
+                fill: chartType !== 'bar'
               },
               {
                 label: 'Завершенные',
                 data: data.completedOrders,
                 borderColor: '#2ecc71',
-                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                backgroundColor: chartType === 'bar' ? 'rgba(46, 204, 113, 0.7)' : 'rgba(46, 204, 113, 0.1)',
                 borderWidth: 2,
-                tension: 0.1
+                tension: 0.1,
+                fill: chartType !== 'bar'
               }
             ]
           },
@@ -462,8 +797,37 @@
             }
           }
         });
+        
+        // Анализ данных
+        const totalOrders = data.totalOrders.reduce((a, b) => a + b, 0);
+        const completedOrders = data.completedOrders.reduce((a, b) => a + b, 0);
+        const completionRate = totalOrders > 0 ? (completedOrders / totalOrders * 100).toFixed(1) : 0;
+        
+        const analysisHtml = `
+          <div class="detailed-report-grid">
+            <div class="detailed-report-card">
+              <h4>Общие показатели</h4>
+              <p>Всего заказов: <span class="highlight">${totalOrders}</span></p>
+              <p>Завершено: <span class="highlight">${completedOrders}</span></p>
+              <p>Конверсия: <span class="highlight">${completionRate}%</span></p>
+            </div>
+            <div class="detailed-report-card">
+              <h4>Пиковые дни</h4>
+              <p>Макс. заказов: <span class="highlight">${Math.max(...data.totalOrders)}</span> (${data.labels[data.totalOrders.indexOf(Math.max(...data.totalOrders))]})</p>
+              <p>Мин. заказов: <span class="highlight">${Math.min(...data.totalOrders)}</span> (${data.labels[data.totalOrders.indexOf(Math.min(...data.totalOrders))]})</p>
+            </div>
+            <div class="detailed-report-card">
+              <h4>Средние показатели</h4>
+              <p>Заказов/день: <span class="highlight">${(totalOrders / data.totalOrders.length).toFixed(1)}</span></p>
+              <p>Завершено/день: <span class="highlight">${(completedOrders / data.totalOrders.length).toFixed(1)}</span></p>
+            </div>
+          </div>
+        `;
+        document.getElementById('ordersAnalysis').innerHTML = analysisHtml;
+        
       } catch (error) {
         console.error('Ошибка загрузки данных для графика заказов:', error);
+        alert('Не удалось загрузить данные по заказам');
       }
     }
     
@@ -495,7 +859,9 @@
                 '#9b59b6',
                 '#1abc9c',
                 '#d35400',
-                '#34495e'
+                '#34495e',
+                '#16a085',
+                '#c0392b'
               ],
               borderWidth: 1
             }]
@@ -521,8 +887,19 @@
             }
           }
         });
+        
+        // Топ услуг
+        let topServicesHtml = '<ol>';
+        for (let i = 0; i < Math.min(5, data.labels.length); i++) {
+          topServicesHtml += `<li><strong>${data.labels[i]}</strong> - ${data.data[i]} заказов</li>`;
+        }
+        topServicesHtml += '</ol>';
+        
+        document.getElementById('topServicesList').innerHTML = topServicesHtml;
+        
       } catch (error) {
         console.error('Ошибка загрузки данных для графика услуг:', error);
+        alert('Не удалось загрузить данные по услугам');
       }
     }
     
@@ -533,6 +910,7 @@
       try {
         const response = await fetch(`/api/reports/staff-performance?period=${period}`);
         const data = await response.json();
+        performanceData = data;
         
         // Обновляем таблицу
         const tableBody = document.getElementById('performanceTableBody');
@@ -544,7 +922,7 @@
             <td>${staff.name}</td>
             <td>${staff.role}</td>
             <td>${staff.orders}</td>
-            <td>${staff.avgDays} дн.</td>
+            <td>${staff.avgDays}</td>
             <td>${formatCurrency(staff.revenue)}</td>
             <td>
               <div style="width: 100%; background: #eee; height: 20px; border-radius: 10px;">
@@ -555,6 +933,36 @@
           `;
           tableBody.appendChild(row);
         });
+        
+        // Анализ эффективности
+        const totalRevenue = data.reduce((sum, staff) => sum + staff.revenue, 0);
+        const avgEfficiency = data.length > 0 ? data.reduce((sum, staff) => sum + staff.efficiency, 0) / data.length : 0;
+        const bestPerformer = data.length > 0 ? data.reduce((max, staff) => staff.efficiency > max.efficiency ? staff : max, data[0]) : null;
+        
+        const analysisHtml = `
+          <div class="detailed-report-grid">
+            <div class="detailed-report-card">
+              <h4>Общие показатели</h4>
+              <p>Сотрудников: <span class="highlight">${data.length}</span></p>
+              <p>Общая выручка: <span class="highlight">${formatCurrency(totalRevenue)}</span></p>
+              <p>Средняя эффективность: <span class="highlight">${avgEfficiency.toFixed(1)}%</span></p>
+            </div>
+            <div class="detailed-report-card">
+              <h4>Лучший сотрудник</h4>
+              ${bestPerformer ? `
+                <p>Имя: <span class="highlight">${bestPerformer.name}</span></p>
+                <p>Эффективность: <span class="highlight">${bestPerformer.efficiency}%</span></p>
+                <p>Выручка: <span class="highlight">${formatCurrency(bestPerformer.revenue)}</span></p>
+              ` : '<p>Нет данных</p>'}
+            </div>
+            <div class="detailed-report-card">
+              <h4>Распределение</h4>
+              <p>Выше среднего: <span class="highlight">${data.filter(s => s.efficiency > avgEfficiency).length}</span></p>
+              <p>Ниже среднего: <span class="highlight">${data.filter(s => s.efficiency < avgEfficiency).length}</span></p>
+            </div>
+          </div>
+        `;
+        document.getElementById('performanceAnalysisContent').innerHTML = analysisHtml;
         
         // Создаем график
         const ctx = document.getElementById('staffPerformanceChart').getContext('2d');
@@ -636,6 +1044,7 @@
         });
       } catch (error) {
         console.error('Ошибка загрузки данных эффективности сотрудников:', error);
+        alert('Не удалось загрузить данные по эффективности');
       }
     }
     
@@ -653,6 +1062,7 @@
       try {
         const response = await fetch(`/api/reports/finance?period=${period}`);
         const data = await response.json();
+        financeData = data;
         
         const ctx = document.getElementById('financeChart').getContext('2d');
         
@@ -728,8 +1138,42 @@
             }
           }
         });
+        
+        // Финансовый анализ
+        const totalRevenue = data.revenue.reduce((a, b) => a + b, 0);
+        const totalExpenses = data.expenses.reduce((a, b) => a + b, 0);
+        const totalProfit = data.profit.reduce((a, b) => a + b, 0);
+        const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100).toFixed(1) : 0;
+        
+        const bestPeriodIndex = data.profit.indexOf(Math.max(...data.profit));
+        const worstPeriodIndex = data.profit.indexOf(Math.min(...data.profit));
+        
+        const analysisHtml = `
+          <div class="detailed-report-grid">
+            <div class="detailed-report-card">
+              <h4>Итоговые показатели</h4>
+              <p>Выручка: <span class="highlight">${formatCurrency(totalRevenue)}</span></p>
+              <p>Расходы: <span class="highlight">${formatCurrency(totalExpenses)}</span></p>
+              <p>Прибыль: <span class="highlight">${formatCurrency(totalProfit)}</span></p>
+              <p>Рентабельность: <span class="highlight">${profitMargin}%</span></p>
+            </div>
+            <div class="detailed-report-card">
+              <h4>Лучший период</h4>
+              <p>Период: <span class="highlight">${data.labels[bestPeriodIndex]}</span></p>
+              <p>Прибыль: <span class="highlight">${formatCurrency(data.profit[bestPeriodIndex])}</span></p>
+            </div>
+            <div class="detailed-report-card">
+              <h4>Худший период</h4>
+              <p>Период: <span class="highlight">${data.labels[worstPeriodIndex]}</span></p>
+              <p>Прибыль: <span class="highlight">${formatCurrency(data.profit[worstPeriodIndex])}</span></p>
+            </div>
+          </div>
+        `;
+        document.getElementById('financeAnalysis').innerHTML = analysisHtml;
+        
       } catch (error) {
         console.error('Ошибка загрузки финансовых данных:', error);
+        alert('Не удалось загрузить финансовые данные');
       }
     }
     
@@ -758,6 +1202,7 @@
         });
       } catch (error) {
         console.error('Ошибка загрузки последних заказов:', error);
+        alert('Не удалось загрузить последние заказы');
       }
     }
     
@@ -775,6 +1220,958 @@
       
       document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
       document.getElementById(tabId).classList.add('active');
+    }
+    
+    // Экспорт отчетов в PDF
+    function exportGeneralStats() {
+      const doc = new jsPDF();
+      const period = document.getElementById('timePeriod').value;
+      const periodText = {
+        'day': 'за день',
+        'week': 'за неделю',
+        'month': 'за месяц',
+        'quarter': 'за квартал',
+        'year': 'за год',
+        'all': 'за все время'
+      }[period] || '';
+      
+      // Заголовок
+      doc.setFontSize(20);
+      doc.text('Общая статистика ' + periodText, 105, 20, { align: 'center' });
+      
+      // Дата генерации
+      doc.setFontSize(10);
+      doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+      
+      // Основные показатели
+      doc.setFontSize(14);
+      doc.text('Основные показатели:', 14, 45);
+      
+      const stats = [
+        ['Пользователи', generalStatsData.users.total, generalStatsData.users.change],
+        ['Заказы', generalStatsData.orders.total, generalStatsData.orders.change],
+        ['Обработано', generalStatsData.processed.total, generalStatsData.processed.change],
+        ['Выручка', formatCurrency(generalStatsData.revenue.total), generalStatsData.revenue.change],
+        ['Сотрудники', generalStatsData.staff.total, generalStatsData.staff.change],
+        ['Заявки', generalStatsData.requests.total, generalStatsData.requests.change]
+      ];
+      
+      doc.autoTable({
+        startY: 50,
+        head: [['Показатель', 'Значение', 'Изменение']],
+        body: stats.map(row => [row[0], row[1], formatChange(row[2])]),
+        styles: {
+          cellPadding: 5,
+          fontSize: 12,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          2: { halign: 'right' }
+        },
+        didDrawCell: (data) => {
+          if (data.section === 'body' && data.column.index === 2) {
+            const change = stats[data.row.index][2];
+            if (change > 0) {
+              data.cell.styles.textColor = [39, 174, 96];
+            } else if (change < 0) {
+              data.cell.styles.textColor = [231, 76, 60];
+            }
+          }
+        }
+      });
+      
+      // Дополнительная информация
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(14);
+      doc.text('Дополнительная информация:', 14, finalY);
+      
+      const conversionRate = generalStatsData.orders.total > 0 
+        ? (generalStatsData.processed.total / generalStatsData.orders.total * 100).toFixed(1) 
+        : 0;
+      
+      const avgOrderValue = generalStatsData.processed.total > 0 
+        ? generalStatsData.revenue.total / generalStatsData.processed.total 
+        : 0;
+      
+      const ordersPerStaff = generalStatsData.staff.total > 0 
+        ? generalStatsData.processed.total / generalStatsData.staff.total 
+        : 0;
+      
+      const revenuePerStaff = generalStatsData.staff.total > 0 
+        ? generalStatsData.revenue.total / generalStatsData.staff.total 
+        : 0;
+      
+      doc.autoTable({
+        startY: finalY + 10,
+        body: [
+          ['Конверсия заказов', `${conversionRate}%`],
+          ['Средний чек', formatCurrency(avgOrderValue)],
+          ['Заказов на сотрудника', ordersPerStaff.toFixed(1)],
+          ['Выручка на сотрудника', formatCurrency(revenuePerStaff)]
+        ],
+        styles: {
+          cellPadding: 5,
+          fontSize: 12
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' }
+        }
+      });
+      
+      // Сохраняем PDF
+      doc.save(`Общая статистика ${periodText}.pdf`);
+    }
+    
+    function exportOrdersChart() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const chartType = document.getElementById('ordersChartType').value;
+      
+      const doc = new jsPDF();
+      
+      // Заголовок
+      doc.setFontSize(20);
+      doc.text(`Динамика заказов с ${startDate} по ${endDate}`, 105, 20, { align: 'center' });
+      
+      // Дата генерации
+      doc.setFontSize(10);
+      doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+      
+      // Добавляем изображение графика
+      const canvas = document.getElementById('ordersChart');
+      const image = canvas.toDataURL('image/png');
+      doc.addImage(image, 'PNG', 15, 40, 180, 100);
+      
+      // Анализ данных
+      const totalOrders = ordersChart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+      const completedOrders = ordersChart.data.datasets[1].data.reduce((a, b) => a + b, 0);
+      const completionRate = totalOrders > 0 ? (completedOrders / totalOrders * 100).toFixed(1) : 0;
+      
+      doc.setFontSize(14);
+      doc.text('Анализ данных:', 15, 150);
+      
+      doc.autoTable({
+        startY: 155,
+        body: [
+          ['Всего заказов', totalOrders],
+          ['Завершено заказов', completedOrders],
+          ['Конверсия', `${completionRate}%`],
+          ['Среднее заказов в день', (totalOrders / ordersChart.data.labels.length).toFixed(1)],
+          ['Максимум заказов', `${Math.max(...ordersChart.data.datasets[0].data)} (${ordersChart.data.labels[ordersChart.data.datasets[0].data.indexOf(Math.max(...ordersChart.data.datasets[0].data))]})`],
+          ['Минимум заказов', `${Math.min(...ordersChart.data.datasets[0].data)} (${ordersChart.data.labels[ordersChart.data.datasets[0].data.indexOf(Math.min(...ordersChart.data.datasets[0].data))]})`]
+        ],
+        styles: {
+          cellPadding: 5,
+          fontSize: 12
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' }
+        }
+      });
+      
+      doc.save(`Динамика заказов ${startDate}-${endDate}.pdf`);
+    }
+    
+    function exportServicesChart() {
+      const period = document.getElementById('servicesPeriod').value;
+      const periodText = {
+        'month': 'за месяц',
+        'quarter': 'за квартал',
+        'year': 'за год',
+        'all': 'за все время'
+      }[period] || '';
+      
+      const doc = new jsPDF();
+      
+      // Заголовок
+      doc.setFontSize(20);
+      doc.text(`Популярность услуг ${periodText}`, 105, 20, { align: 'center' });
+      
+      // Дата генерации
+      doc.setFontSize(10);
+      doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+      
+      // Добавляем изображение графика
+      const canvas = document.getElementById('servicesChart');
+      const image = canvas.toDataURL('image/png');
+      doc.addImage(image, 'PNG', 15, 40, 180, 100);
+      
+      // Таблица с данными
+      const totalOrders = servicesChart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+      
+      doc.setFontSize(14);
+      doc.text('Статистика по услугам:', 15, 150);
+      
+      const tableData = servicesChart.data.labels.map((label, i) => {
+        const value = servicesChart.data.datasets[0].data[i];
+        const percentage = (value / totalOrders * 100).toFixed(1);
+        return [label, value, `${percentage}%`];
+      });
+      
+      doc.autoTable({
+        startY: 155,
+        head: [['Услуга', 'Количество', 'Доля']],
+        body: tableData,
+        styles: {
+          cellPadding: 5,
+          fontSize: 12,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' }
+        }
+      });
+      
+      doc.save(`Популярность услуг ${periodText}.pdf`);
+    }
+    
+    function exportPerformanceReport() {
+      const period = document.getElementById('performancePeriod').value;
+      const periodText = {
+        'month': 'за месяц',
+        'quarter': 'за квартал',
+        'year': 'за год',
+        'all': 'за все время'
+      }[period] || '';
+      
+      const doc = new jsPDF();
+      
+      // Заголовок
+      doc.setFontSize(20);
+      doc.text(`Эффективность сотрудников ${periodText}`, 105, 20, { align: 'center' });
+      
+      // Дата генерации
+      doc.setFontSize(10);
+      doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+      
+      // Добавляем изображение графика
+      const canvas = document.getElementById('staffPerformanceChart');
+      const image = canvas.toDataURL('image/png');
+      doc.addImage(image, 'PNG', 15, 40, 180, 100);
+      
+      // Анализ данных
+      const totalRevenue = performanceData.reduce((sum, staff) => sum + staff.revenue, 0);
+      const avgEfficiency = performanceData.length > 0 
+        ? performanceData.reduce((sum, staff) => sum + staff.efficiency, 0) / performanceData.length 
+        : 0;
+      
+      doc.setFontSize(14);
+      doc.text('Ключевые показатели:', 15, 150);
+      
+      doc.autoTable({
+        startY: 155,
+        body: [
+          ['Общая выручка', formatCurrency(totalRevenue)],
+          ['Средняя эффективность', `${avgEfficiency.toFixed(1)}%`],
+          ['Сотрудников выше среднего', performanceData.filter(s => s.efficiency > avgEfficiency).length],
+          ['Сотрудников ниже среднего', performanceData.filter(s => s.efficiency < avgEfficiency).length]
+        ],
+        styles: {
+          cellPadding: 5,
+          fontSize: 12
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' }
+        }
+      });
+      
+      // Лучшие сотрудники
+      const bestPerformers = [...performanceData]
+        .sort((a, b) => b.efficiency - a.efficiency)
+        .slice(0, 3);
+      
+      doc.setFontSize(14);
+      doc.text('Лучшие сотрудники:', 15, doc.lastAutoTable.finalY + 10);
+      
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 15,
+        head: [['Сотрудник', 'Эффективность', 'Выручка', 'Заказов']],
+        body: bestPerformers.map(staff => [
+          staff.name,
+          `${staff.efficiency}%`,
+          formatCurrency(staff.revenue),
+          staff.orders
+        ]),
+        styles: {
+          cellPadding: 5,
+          fontSize: 12,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' }
+        }
+      });
+      
+      doc.save(`Эффективность сотрудников ${periodText}.pdf`);
+    }
+    
+    function exportPerformanceTable() {
+      const period = document.getElementById('performancePeriod').value;
+      const periodText = {
+        'month': 'за месяц',
+        'quarter': 'за квартал',
+        'year': 'за год',
+        'all': 'за все время'
+      }[period] || '';
+      
+      const doc = new jsPDF();
+      
+      // Заголовок
+      doc.setFontSize(20);
+      doc.text(`Эффективность сотрудников ${periodText}`, 105, 20, { align: 'center' });
+      
+      // Дата генерации
+      doc.setFontSize(10);
+      doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+      
+      // Таблица с данными
+      const tableData = performanceData.map(staff => [
+        staff.name,
+        staff.role,
+        staff.orders,
+        staff.avgDays,
+        formatCurrency(staff.revenue),
+        `${staff.efficiency}%`
+      ]);
+      
+      doc.autoTable({
+        startY: 40,
+        head: [['Сотрудник', 'Должность', 'Заказов', 'Сроки (дн.)', 'Выручка', 'Эффективность']],
+        body: tableData,
+        styles: {
+          cellPadding: 5,
+          fontSize: 10,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'right' },
+          5: { halign: 'right' }
+        },
+        didDrawCell: (data) => {
+          if (data.section === 'body' && data.column.index === 5) {
+            const efficiency = performanceData[data.row.index].efficiency;
+            if (efficiency > 80) {
+              data.cell.styles.textColor = [39, 174, 96];
+            } else if (efficiency > 50) {
+              data.cell.styles.textColor = [241, 196, 15];
+            } else {
+              data.cell.styles.textColor = [231, 76, 60];
+            }
+          }
+        }
+      });
+      
+      doc.save(`Таблица эффективности ${periodText}.pdf`);
+    }
+    
+    function exportFinanceReport() {
+      const period = document.getElementById('financePeriod').value;
+      const periodText = {
+        'month': 'по месяцам',
+        'quarter': 'по кварталам',
+        'year': 'по годам'
+      }[period] || '';
+      
+      const doc = new jsPDF();
+      
+      // Заголовок
+      doc.setFontSize(20);
+      doc.text(`Финансовые показатели ${periodText}`, 105, 20, { align: 'center' });
+      
+      // Дата генерации
+      doc.setFontSize(10);
+      doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+      
+      // Добавляем изображение графика
+      const canvas = document.getElementById('financeChart');
+      const image = canvas.toDataURL('image/png');
+      doc.addImage(image, 'PNG', 15, 40, 180, 100);
+      
+      // Финансовые показатели
+      const totalRevenue = financeData.revenue.reduce((a, b) => a + b, 0);
+      const totalExpenses = financeData.expenses.reduce((a, b) => a + b, 0);
+      const totalProfit = financeData.profit.reduce((a, b) => a + b, 0);
+      const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100).toFixed(1) : 0;
+      
+      doc.setFontSize(14);
+      doc.text('Итоговые показатели:', 15, 150);
+      
+      doc.autoTable({
+        startY: 155,
+        body: [
+          ['Общая выручка', formatCurrency(totalRevenue)],
+          ['Общие расходы', formatCurrency(totalExpenses)],
+          ['Общая прибыль', formatCurrency(totalProfit)],
+          ['Рентабельность', `${profitMargin}%`]
+        ],
+        styles: {
+          cellPadding: 5,
+          fontSize: 12
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' }
+        }
+      });
+      
+      // Подробная таблица по периодам
+      doc.setFontSize(14);
+      doc.text('Детализация по периодам:', 15, doc.lastAutoTable.finalY + 10);
+      
+      const tableData = financeData.labels.map((label, i) => [
+        label,
+        formatCurrency(financeData.revenue[i]),
+        formatCurrency(financeData.expenses[i]),
+        formatCurrency(financeData.profit[i])
+      ]);
+      
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 15,
+        head: [['Период', 'Выручка', 'Расходы', 'Прибыль']],
+        body: tableData,
+        styles: {
+          cellPadding: 5,
+          fontSize: 10,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' }
+        },
+        didDrawCell: (data) => {
+          if (data.section === 'body' && data.column.index === 3) {
+            const profit = financeData.profit[data.row.index];
+            if (profit > 0) {
+              data.cell.styles.textColor = [39, 174, 96];
+            } else if (profit < 0) {
+              data.cell.styles.textColor = [231, 76, 60];
+            }
+          }
+        }
+      });
+      
+      doc.save(`Финансовый отчет ${periodText}.pdf`);
+    }
+    
+    function exportRecentOrders() {
+      const count = document.getElementById('recentOrdersCount').value;
+      const doc = new jsPDF();
+      
+      // Заголовок
+      doc.setFontSize(20);
+      doc.text(`Последние ${count} заказов`, 105, 20, { align: 'center' });
+      
+      // Дата генерации
+      doc.setFontSize(10);
+      doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+      
+      // Таблица с данными
+      const rows = Array.from(document.querySelectorAll('#recentOrdersBody tr'));
+      const tableData = rows.map(row => {
+        const cells = row.querySelectorAll('td');
+        return [
+          cells[0].textContent,
+          cells[1].textContent,
+          cells[2].textContent,
+          cells[3].textContent,
+          cells[4].querySelector('span').textContent,
+          cells[5].textContent
+        ];
+      });
+      
+      doc.autoTable({
+        startY: 40,
+        head: [['ID', 'Клиент', 'Услуга', 'Дата', 'Статус', 'Сумма']],
+        body: tableData,
+        styles: {
+          cellPadding: 5,
+          fontSize: 10,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          5: { halign: 'right' }
+        },
+        didDrawCell: (data) => {
+          if (data.section === 'body' && data.column.index === 4) {
+            const status = data.cell.raw;
+            if (status.includes('Завершен') || status.includes('Выполнен')) {
+              data.cell.styles.fillColor = [209, 250, 229];
+              data.cell.styles.textColor = [6, 95, 70];
+            } else if (status.includes('В работе') || status.includes('Обработка')) {
+              data.cell.styles.fillColor = [254, 243, 199];
+              data.cell.styles.textColor = [146, 64, 14];
+            } else {
+              data.cell.styles.fillColor = [254, 226, 226];
+              data.cell.styles.textColor = [153, 27, 27];
+            }
+          }
+        }
+      });
+      
+      // Статистика по статусам
+      const statusCounts = {};
+      tableData.forEach(row => {
+        const status = row[4];
+        statusCounts[status] = (statusCounts[status] || 0) + 1;
+      });
+      
+      const statusData = Object.entries(statusCounts).map(([status, count]) => [
+        status,
+        count,
+        `${(count / tableData.length * 100).toFixed(1)}%`
+      ]);
+      
+      doc.setFontSize(14);
+      doc.text('Статистика по статусам:', 15, doc.lastAutoTable.finalY + 10);
+      
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 15,
+        head: [['Статус', 'Количество', 'Доля']],
+        body: statusData,
+        styles: {
+          cellPadding: 5,
+          fontSize: 12
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' }
+        }
+      });
+      
+      doc.save(`Последние ${count} заказов.pdf`);
+    }
+    
+    // Генерация комплексных отчетов
+    function generateFullReport() {
+      const doc = new jsPDF();
+      const date = new Date();
+      const dateStr = date.toLocaleDateString();
+      
+      // Титульный лист
+      doc.setFontSize(24);
+      doc.text('Полный отчет EuroBuld', 105, 50, { align: 'center' });
+      doc.setFontSize(18);
+      doc.text(dateStr, 105, 70, { align: 'center' });
+      doc.addPage();
+      
+      // Общая статистика
+      doc.setFontSize(20);
+      doc.text('1. Общая статистика', 15, 20);
+      
+      // График общей статистики
+      const generalCanvas = document.createElement('canvas');
+      generalCanvas.width = 800;
+      generalCanvas.height = 400;
+      const generalCtx = generalCanvas.getContext('2d');
+      
+      new Chart(generalCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Пользователи', 'Заказы', 'Обработано', 'Выручка', 'Сотрудники', 'Заявки'],
+          datasets: [{
+            label: 'Количество',
+            data: [
+              generalStatsData.users.total,
+              generalStatsData.orders.total,
+              generalStatsData.processed.total,
+              generalStatsData.revenue.total / 1000, // Переводим в тысячи
+              generalStatsData.staff.total,
+              generalStatsData.requests.total
+            ],
+            backgroundColor: 'rgba(79, 70, 229, 0.7)'
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+      
+      doc.addImage(generalCanvas.toDataURL('image/png'), 'PNG', 15, 30, 180, 90);
+      
+      // Таблица общей статистики
+      doc.autoTable({
+        startY: 130,
+        head: [['Показатель', 'Значение', 'Изменение']],
+        body: [
+          ['Пользователи', generalStatsData.users.total, formatChange(generalStatsData.users.change)],
+          ['Заказы', generalStatsData.orders.total, formatChange(generalStatsData.orders.change)],
+          ['Обработано', generalStatsData.processed.total, formatChange(generalStatsData.processed.change)],
+          ['Выручка', formatCurrency(generalStatsData.revenue.total), formatChange(generalStatsData.revenue.change)],
+          ['Сотрудники', generalStatsData.staff.total, formatChange(generalStatsData.staff.change)],
+          ['Заявки', generalStatsData.requests.total, formatChange(generalStatsData.requests.change)]
+        ],
+        styles: {
+          cellPadding: 5,
+          fontSize: 10
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          2: { halign: 'right' }
+        }
+      });
+      
+      doc.addPage();
+      
+      // Динамика заказов
+      doc.setFontSize(20);
+      doc.text('2. Динамика заказов', 15, 20);
+      doc.addImage(document.getElementById('ordersChart').toDataURL('image/png'), 'PNG', 15, 30, 180, 100);
+      
+      // Финансовые показатели
+      doc.setFontSize(20);
+      doc.text('3. Финансовые показатели', 15, 140);
+      doc.addImage(document.getElementById('financeChart').toDataURL('image/png'), 'PNG', 15, 150, 180, 100);
+      
+      doc.addPage();
+      
+      // Популярность услуг
+      doc.setFontSize(20);
+      doc.text('4. Популярность услуг', 15, 20);
+      doc.addImage(document.getElementById('servicesChart').toDataURL('image/png'), 'PNG', 15, 30, 180, 100);
+      
+      // Эффективность сотрудников
+      doc.setFontSize(20);
+      doc.text('5. Эффективность сотрудников', 15, 140);
+      doc.addImage(document.getElementById('staffPerformanceChart').toDataURL('image/png'), 'PNG', 15, 150, 180, 100);
+      
+      doc.save(`Полный отчет EuroBuld ${dateStr}.pdf`);
+    }
+    
+    function generateFinancialReport() {
+      const doc = new jsPDF();
+      const date = new Date();
+      const dateStr = date.toLocaleDateString();
+      
+      // Титульный лист
+      doc.setFontSize(24);
+      doc.text('Финансовый отчет EuroBuld', 105, 50, { align: 'center' });
+      doc.setFontSize(18);
+      doc.text(dateStr, 105, 70, { align: 'center' });
+      doc.addPage();
+      
+      // Основные финансовые показатели
+      doc.setFontSize(20);
+      doc.text('1. Основные финансовые показатели', 15, 20);
+      doc.addImage(document.getElementById('financeChart').toDataURL('image/png'), 'PNG', 15, 30, 180, 100);
+      
+      const totalRevenue = financeData.revenue.reduce((a, b) => a + b, 0);
+      const totalExpenses = financeData.expenses.reduce((a, b) => a + b, 0);
+      const totalProfit = financeData.profit.reduce((a, b) => a + b, 0);
+      const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100).toFixed(1) : 0;
+      
+      doc.autoTable({
+        startY: 140,
+        body: [
+          ['Общая выручка', formatCurrency(totalRevenue)],
+          ['Общие расходы', formatCurrency(totalExpenses)],
+          ['Общая прибыль', formatCurrency(totalProfit)],
+          ['Рентабельность', `${profitMargin}%`]
+        ],
+        styles: {
+          cellPadding: 5,
+          fontSize: 12
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 100 },
+          1: { halign: 'right', cellWidth: 80 }
+        }
+      });
+      
+      doc.addPage();
+      
+      // Детализация по периодам
+      doc.setFontSize(20);
+      doc.text('2. Детализация по периодам', 15, 20);
+      
+      const tableData = financeData.labels.map((label, i) => [
+        label,
+        formatCurrency(financeData.revenue[i]),
+        formatCurrency(financeData.expenses[i]),
+        formatCurrency(financeData.profit[i]),
+        financeData.revenue[i] > 0 ? `${(financeData.profit[i] / financeData.revenue[i] * 100).toFixed(1)}%` : '0%'
+      ]);
+      
+      doc.autoTable({
+        startY: 30,
+        head: [['Период', 'Выручка', 'Расходы', 'Прибыль', 'Рентабельность']],
+        body: tableData,
+        styles: {
+          cellPadding: 5,
+          fontSize: 10,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'right' }
+        },
+        didDrawCell: (data) => {
+          if (data.section === 'body' && data.column.index === 3) {
+            const profit = financeData.profit[data.row.index];
+            if (profit > 0) {
+              data.cell.styles.textColor = [39, 174, 96];
+            } else if (profit < 0) {
+              data.cell.styles.textColor = [231, 76, 60];
+            }
+          }
+        }
+      });
+      
+      // График динамики рентабельности
+      const marginCanvas = document.createElement('canvas');
+      marginCanvas.width = 800;
+      marginCanvas.height = 400;
+      const marginCtx = marginCanvas.getContext('2d');
+      
+      new Chart(marginCtx, {
+        type: 'line',
+        data: {
+          labels: financeData.labels,
+          datasets: [{
+            label: 'Рентабельность (%)',
+            data: financeData.revenue.map((rev, i) => rev > 0 ? (financeData.profit[i] / rev * 100) : 0),
+            borderColor: '#9b59b6',
+            backgroundColor: 'rgba(155, 89, 182, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Рентабельность (%)'
+              }
+            }
+          }
+        }
+      });
+      
+      doc.addPage();
+      doc.setFontSize(20);
+      doc.text('3. Динамика рентабельности', 15, 20);
+      doc.addImage(marginCanvas.toDataURL('image/png'), 'PNG', 15, 30, 180, 100);
+      
+      doc.save(`Финансовый отчет EuroBuld ${dateStr}.pdf`);
+    }
+    
+    function generateStaffReport() {
+      const doc = new jsPDF();
+      const date = new Date();
+      const dateStr = date.toLocaleDateString();
+      
+      // Титульный лист
+      doc.setFontSize(24);
+      doc.text('Отчет по персоналу EuroBuld', 105, 50, { align: 'center' });
+      doc.setFontSize(18);
+      doc.text(dateStr, 105, 70, { align: 'center' });
+      doc.addPage();
+      
+      // Эффективность сотрудников
+      doc.setFontSize(20);
+      doc.text('1. Эффективность сотрудников', 15, 20);
+      doc.addImage(document.getElementById('staffPerformanceChart').toDataURL('image/png'), 'PNG', 15, 30, 180, 100);
+      
+      const totalRevenue = performanceData.reduce((sum, staff) => sum + staff.revenue, 0);
+      const avgEfficiency = performanceData.length > 0 
+        ? performanceData.reduce((sum, staff) => sum + staff.efficiency, 0) / performanceData.length 
+        : 0;
+      
+      doc.autoTable({
+        startY: 140,
+        body: [
+          ['Общая выручка', formatCurrency(totalRevenue)],
+          ['Средняя эффективность', `${avgEfficiency.toFixed(1)}%`],
+          ['Сотрудников выше среднего', performanceData.filter(s => s.efficiency > avgEfficiency).length],
+          ['Сотрудников ниже среднего', performanceData.filter(s => s.efficiency < avgEfficiency).length]
+        ],
+        styles: {
+          cellPadding: 5,
+          fontSize: 12
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' }
+        }
+      });
+      
+      doc.addPage();
+      
+      // Рейтинг сотрудников
+      doc.setFontSize(20);
+      doc.text('2. Рейтинг сотрудников по эффективности', 15, 20);
+      
+      const sortedStaff = [...performanceData].sort((a, b) => b.efficiency - a.efficiency);
+      const tableData = sortedStaff.map((staff, index) => [
+        index + 1,
+        staff.name,
+        staff.role,
+        `${staff.efficiency}%`,
+        formatCurrency(staff.revenue),
+        staff.orders,
+        staff.avgDays.toFixed(1)
+      ]);
+      
+      doc.autoTable({
+        startY: 30,
+        head: [['#', 'Сотрудник', 'Должность', 'Эффективность', 'Выручка', 'Заказов', 'Срок (дн.)']],
+        body: tableData,
+        styles: {
+          cellPadding: 5,
+          fontSize: 10,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 15 },
+          1: { fontStyle: 'bold' },
+          3: { halign: 'right' },
+          4: { halign: 'right' },
+          5: { halign: 'right' },
+          6: { halign: 'right' }
+        },
+        didDrawCell: (data) => {
+          if (data.section === 'body' && data.column.index === 3) {
+            const efficiency = sortedStaff[data.row.index].efficiency;
+            if (efficiency > 80) {
+              data.cell.styles.textColor = [39, 174, 96];
+            } else if (efficiency > 50) {
+              data.cell.styles.textColor = [241, 196, 15];
+            } else {
+              data.cell.styles.textColor = [231, 76, 60];
+            }
+          }
+        }
+      });
+      
+      doc.save(`Отчет по персоналу EuroBuld ${dateStr}.pdf`);
+    }
+    
+    function generateServicesReport() {
+      const doc = new jsPDF();
+      const date = new Date();
+      const dateStr = date.toLocaleDateString();
+      
+      // Титульный лист
+      doc.setFontSize(24);
+      doc.text('Отчет по услугам EuroBuld', 105, 50, { align: 'center' });
+      doc.setFontSize(18);
+      doc.text(dateStr, 105, 70, { align: 'center' });
+      doc.addPage();
+      
+      // Популярность услуг
+      doc.setFontSize(20);
+      doc.text('1. Популярность услуг', 15, 20);
+      doc.addImage(document.getElementById('servicesChart').toDataURL('image/png'), 'PNG', 15, 30, 180, 100);
+      
+      const totalOrders = servicesChart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+      
+      doc.autoTable({
+        startY: 140,
+        head: [['Услуга', 'Количество', 'Доля', 'Рейтинг']],
+        body: servicesChart.data.labels.map((label, i) => {
+          const value = servicesChart.data.datasets[0].data[i];
+          const percentage = (value / totalOrders * 100).toFixed(1);
+          return [
+            label,
+            value,
+            `${percentage}%`,
+            i + 1
+          ];
+        }),
+        styles: {
+          cellPadding: 5,
+          fontSize: 10,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'center', cellWidth: 20 }
+        }
+      });
+      
+      doc.save(`Отчет по услугам EuroBuld ${dateStr}.pdf`);
+    }
+    
+    // Экспорт всех отчетов в один ZIP-архив
+    async function exportAllReports() {
+      alert('Экспорт всех отчетов в разработке. Пока используйте отдельные экспорты.');
+      // Реализация экспорта всех отчетов в ZIP потребует библиотеки JSZip
+      // и более сложной логики, которую можно добавить позже
     }
   </script>
 </body>

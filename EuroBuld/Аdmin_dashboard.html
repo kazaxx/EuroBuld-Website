@@ -16,6 +16,32 @@
       height: 100vh;
       background-color: #f9f9f9;
     }
+    /* Добавляем стили для счетчика символов */
+    .char-counter {
+      font-size: 12px;
+      color: #666;
+      text-align: right;
+      margin-top: 2px;
+    }
+    .char-counter.limit-reached {
+      color: #e74c3c;
+    }
+    .modal-field {
+      margin-bottom: 15px;
+    }
+    .modal-field label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .modal-field input, 
+    .modal-field select, 
+    .modal-field textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -111,6 +137,121 @@
       document.getElementById('tableContainer').innerHTML = html;
     }
 
+    const fieldConstraints = {
+        'users': {
+            'Email': { maxLength: 40, type: 'text' },
+            'Password': { maxLength: 255, type: 'text' },
+            'Number_Phone': { maxLength: 20, type: 'text' },
+            'Address': { maxLength: 20, type: 'text' },
+            'First_name': { maxLength: 20, type: 'text' },
+            'Last_name': { maxLength: 20, type: 'text' },
+            'Patronymic': { maxLength: 20, type: 'text' },
+            'Passport_details': { maxLength: 20, type: 'text' }
+        },
+        'staff': {
+            'Email': { maxLength: 40, type: 'text' },
+            'Password': { maxLength: 255, type: 'text' },
+            'First_name': { maxLength: 20, type: 'text' },
+            'Last_name': { maxLength: 20, type: 'text' },
+            'Patronymic': { maxLength: 20, type: 'text' },
+            'Passport_details': { maxLength: 20, type: 'text' },
+            'Date_birth': { type: 'date' },
+            'Date_employment': { type: 'date' }
+        },
+        'service': {
+            'Item_Name': { maxLength: 100, type: 'text' },
+            'Item_Description': { maxLength: 500, type: 'text' },
+            'Price': { min: 0, max: 999999.99, type: 'number', step: 0.01 }
+        },
+        'processed_customer_orders': {
+            'Final_sum': { min: 0, max: 999999.99, type: 'number', step: 0.01 },
+            'Date_Start': { type: 'date' },
+            'Date_Ending': { type: 'date' }
+        },
+        'role': {
+            'roll_name': { maxLength: 50, type: 'text' },
+            'salary': { min: 0, max: 999999.99, type: 'number', step: 0.01 }
+        }
+    };
+
+    // Функция для создания поля ввода с информацией об ограничениях
+    function createInputWithConstraints(key, value, tableName) {
+        const constraints = fieldConstraints[tableName]?.[key] || { type: 'text', maxLength: 255 };
+        const container = document.createElement('div');
+        container.className = 'modal-field';
+        
+        const label = document.createElement('label');
+        label.textContent = key;
+        container.appendChild(label);
+        
+        let input;
+        if (constraints.type === 'select') {
+            // Обработка выпадающих списков
+            input = document.createElement('select');
+            input.name = key;
+            input.required = true;
+            // Здесь можно добавить options если нужно
+        } else {
+            input = document.createElement('input');
+            input.name = key;
+            input.type = constraints.type;
+            input.value = value || '';
+            
+            if (constraints.type === 'text' && constraints.maxLength) {
+                input.maxLength = constraints.maxLength;
+            }
+            if (constraints.type === 'number') {
+                if (constraints.min !== undefined) input.min = constraints.min;
+                if (constraints.max !== undefined) input.max = constraints.max;
+                if (constraints.step !== undefined) input.step = constraints.step;
+            }
+        }
+        
+        container.appendChild(input);
+        
+        const info = document.createElement('div');
+        info.className = 'field-info';
+        
+        if (constraints.type === 'text' && constraints.maxLength) {
+            
+            // Добавляем счетчик только для текстовых полей с ограничением длины
+            const counter = document.createElement('div');
+            counter.className = 'char-counter';
+            counter.id = `counter-${key}`;
+            counter.textContent = `${value?.length || 0}/${constraints.maxLength}`;
+            container.appendChild(counter);
+            
+            input.addEventListener('input', function() {
+                const currentLength = this.value.length;
+                counter.textContent = `${currentLength}/${constraints.maxLength}`;
+                
+                if (currentLength >= constraints.maxLength) {
+                    counter.classList.add('limit-reached');
+                } else {
+                    counter.classList.remove('limit-reached');
+                }
+            });
+            
+            input.dispatchEvent(new Event('input'));
+        } 
+        else if (constraints.type === 'number') {
+            if (constraints.min !== undefined && constraints.max !== undefined) {
+                info.textContent = `Допустимый диапазон: ${constraints.min} — ${constraints.max}`;
+            } else if (constraints.min !== undefined) {
+                info.textContent = `Минимальное значение: ${constraints.min}`;
+            } else if (constraints.max !== undefined) {
+                info.textContent = `Максимальное значение: ${constraints.max}`;
+            }
+        }
+        else if (constraints.type === 'date') {
+            info.textContent = `Формат даты: ГГГГ-ММ-ДД`;
+        }
+        
+        container.appendChild(info);
+        
+        return container;
+    }
+
     function selectRow(row) {
       document.querySelectorAll('tr').forEach(r => r.style.backgroundColor = '');
       row.style.backgroundColor = '#ffe0e0';
@@ -120,9 +261,22 @@
     function getSelectedRowData() {
       const selected = document.querySelector('tr[data-selected="true"]');
       if (!selected) return null;
-      const values = [...selected.children].map(td => td.textContent);
+      
       const keys = Object.keys(tableData[0]);
-      return Object.fromEntries(keys.map((k, i) => [k, values[i]]));
+      const data = {};
+      
+      keys.forEach((key, i) => {
+        const cell = selected.children[i];
+        if (key === 'ImageBase64' && cell.querySelector('img')) {
+          // Для изображений берем src
+          data[key] = cell.querySelector('img').src.split(',')[1];
+        } else {
+          // Для обычных ячеек - текстовое содержимое
+          data[key] = cell.textContent;
+        }
+      });
+      
+      return data;
     }
 
     function openModal(mode) {
@@ -138,79 +292,97 @@
 
       modalTitle.textContent = mode === 'edit' ? 'Изменить запись' : 'Добавить запись';
 
-      if (currentTable === 'processed_customer_orders') {
-    // Загружаем статусы, если еще не загружены
-    loadStatuses().then(statuses => {
-      formFields.innerHTML = `
+      // Обработка специальных случаев
+      if (currentTable === 'service') {
+  for (let key in tableData[0]) {
+    if (key === 'ImageBase64') {
+      formFields.innerHTML += `
         <div class="modal-field">
-          <label>Статус</label>
-          <select name="ID_Status_Orders" required>
-            ${statuses.map(status => 
-              `<option value="${status.ID_Status_Orders}" ${data.ID_Status_Orders == status.ID_Status_Orders ? 'selected' : ''}>
-                ${status.Name_Status}
-              </option>`
-            ).join('')}
-          </select>
-        </div>
-        <div class="modal-field">
-          <label>Дата начала</label>
-          <input type="date" name="Date_Start" value="${data.Date_Start || ''}" required />
-        </div>
-        <div class="modal-field">
-          <label>Дата окончания</label>
-          <input type="date" name="Date_Ending" value="${data.Date_Ending || ''}" />
-        </div>
-        <div class="modal-field">
-          <label>Итоговая сумма</label>
-          <input type="number" step="0.01" name="Final_sum" value="${data.Final_sum || ''}" required />
+          <label>Фото</label>
+          <input type="file" name="ImageBase64" accept="image/*" />
+          ${data[key] ? `<img src="data:image/jpeg;base64,${data[key]}" style="max-width: 100px; margin-top: 10px;"/>` : ''}
         </div>
       `;
-      
-      document.getElementById('recordId').value = data?.ID_Processed_customer_orders || '';
-      modal.style.display = 'flex';
-    });
-    return;
+    } else if (!key.toLowerCase().includes('id')) {
+      formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
+    }
   }
-
-      if (currentTable === 'staff') {
-        let currentRoleId = data && data.ID_Role ? data.ID_Role : '';
-        let optionsHtml = rolesData.map(role =>
+}else if (currentTable === 'processed_customer_orders') {
+        loadStatuses().then(statuses => {
+          formFields.innerHTML = `
+            <div class="modal-field">
+              <label>Статус</label>
+              <select name="ID_Status_Orders" required>
+                ${statuses.map(status => 
+                  `<option value="${status.ID_Status_Orders}" ${data.ID_Status_Orders == status.ID_Status_Orders ? 'selected' : ''}>
+                    ${status.Name_Status}
+                  </option>`
+                ).join('')}
+              </select>
+            </div>
+            <div class="modal-field">
+              <label>Дата начала</label>
+              <input type="date" name="Date_Start" value="${data.Date_Start || ''}" required />
+            </div>
+            <div class="modal-field">
+              <label>Дата окончания</label>
+              <input type="date" name="Date_Ending" value="${data.Date_Ending || ''}" />
+            </div>
+            <div class="modal-field">
+              <label>Итоговая сумма</label>
+              <input type="number" step="0.01" name="Final_sum" value="${data.Final_sum || ''}" required />
+              <div class="char-counter">Числовое поле</div>
+            </div>
+          `;
+          document.getElementById('recordId').value = data?.ID_Processed_customer_orders || '';
+          modal.style.display = 'flex';
+        });
+        return;
+      } else if (currentTable === 'staff') {
+        const currentRoleId = data?.ID_Role || '';
+        const roleOptions = rolesData.map(role =>
           `<option value="${role.ID_Role}" ${role.ID_Role == currentRoleId ? 'selected' : ''}>${role.roll_name}</option>`
         ).join('');
 
         formFields.innerHTML += `
           <div class="modal-field">
             <label>Роль</label>
-            <select name="ID_Role" required>
-              ${optionsHtml}
-            </select>
+            <select name="ID_Role" required>${roleOptions}</select>
+            <div class="char-counter">Выпадающий список</div>
           </div>
         `;
 
         for (let key in tableData[0]) {
           if (['ID_Staff', 'ID_Role', 'roll_name'].includes(key)) continue;
-          formFields.innerHTML += `
-            <div class="modal-field">
-              <label>${key}</label>
-              <input name="${key}" value="${data?.[key] || ''}" required />
-            </div>
-          `;
-        }
+        formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
+      }
       } else {
         for (let key in tableData[0]) {
           if (key.toLowerCase().includes('id')) continue;
-          formFields.innerHTML += `
-            <div class="modal-field">
-              <label>${key}</label>
-              <input name="${key}" value="${data?.[key] || ''}" required />
-            </div>
-          `;
+          
+          // Для числовых полей и дат не показываем счетчик
+          if (key === 'Final_sum' || key === 'Price' || key === 'salary' || 
+              key === 'Date_Start' || key === 'Date_Ending' || key === 'Date_birth' || 
+              key === 'Date_employment' || key === 'Order_Date') {
+            formFields.innerHTML += `
+              <div class="modal-field">
+                <label>${key}</label>
+                <input name="${key}" value="${data?.[key] || ''}" 
+                  ${key.includes('Date') ? 'type="date"' : 'type="number" step="0.01"'} 
+                  required />
+                <div class="char-counter">${key.includes('Date') ? 'Дата' : 'Числовое поле'}</div>
+              </div>
+            `;
+          } else {
+        formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
+      }
         }
       }
 
       document.getElementById('recordId').value = data?.[Object.keys(data)[0]] || '';
       modal.style.display = 'flex';
     }
+
 
     function closeModal() {
       document.getElementById('modal').style.display = 'none';
@@ -220,12 +392,22 @@
       e.preventDefault();
       const form = e.target;
       const data = {};
-      for (let input of form.querySelectorAll('input[name], select[name]')) {
+      const fileInput = form.querySelector('input[type="file"]');
+
+      for (let input of form.querySelectorAll('input[name]:not([type="file"]), select[name]')) {
         data[input.name] = input.value;
       }
+
+      if (fileInput && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const base64 = await fileToBase64(file);
+        data.ImageBase64 = base64.split(',')[1];
+      }
+
       const id = form.querySelector('#recordId').value;
       const method = id ? 'PUT' : 'POST';
       const url = `/api/${currentTable}${id ? '/' + id : ''}`;
+
       try {
         const response = await fetch(url, {
           method,
@@ -233,7 +415,7 @@
           body: JSON.stringify(data)
         });
         if (response.ok) {
-          alert('Запись добавлена!');
+          alert('Запись успешно сохранена!');
           closeModal();
           loadTable(currentTable);
         } else {
@@ -241,10 +423,19 @@
           alert(`Ошибка: ${error}`);
         }
       } catch (error) {
-        console.error('Ошибка при отправке данных:', error);
-        alert('Произошла ошибка при добавлении записи.');
+        console.error('Ошибка при отправке:', error);
+        alert('Ошибка при добавлении записи.');
       }
     });
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
 
     async function deleteRecord() {
       const data = getSelectedRowData();
