@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Админ-панель | Таблицы</title>
+  <title>EuroBuld - Админ-панель | Таблицы</title>
   <link rel="stylesheet" href="css/styele.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
@@ -10,66 +10,1160 @@
       box-sizing: border-box;
     }
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       display: flex;
       height: 100vh;
-      background-color: #f9f9f9;
+      background-color: #f5f7fa;
+      color: #333;
     }
-    /* Добавляем стили для счетчика символов */
+    
+    /* Обновленный сайдбар */
+    .sidebar {
+      width: 280px;
+      background: linear-gradient(135deg, #430113 0%, #6a0f1d 100%);
+      padding: 20px 0;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 10;
+    }
+    
+    .sidebar-header {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .sidebar-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sidebar-header h3 i {
+      color: #ff9e9e;
+    }
+    
+    .sidebar div {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      padding: 12px 25px;
+      transition: all 0.3s ease;
+      border-radius: 0 30px 30px 0;
+      margin: 5px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sidebar div::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0;
+      background-color: rgba(255,255,255,0.1);
+      transition: width 0.3s ease;
+    }
+    
+    .sidebar div:hover::before {
+      width: 100%;
+    }
+    
+    .sidebar div i {
+      font-size: 16px;
+      min-width: 20px;
+      text-align: center;
+      color: #ffb8b8;
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar div:hover {
+      color: #fff;
+    }
+    
+    .sidebar div:hover i {
+      transform: scale(1.2);
+      color: #fff;
+    }
+    
+    .sidebar div.active {
+      background-color: rgba(255,255,255,0.15);
+      color: #fff;
+      font-weight: 500;
+    }
+    
+    .sidebar div.active i {
+      color: #fff;
+    }
+    
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      text-align: center;
+    }
+    
+    /* Основная область */
+    .main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Верхняя панель */
+    .topbar {
+      background-color: white;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      z-index: 5;
+    }
+    
+    .topbar .profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    
+    .profile-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #430113;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    
+    .profile-name {
+      font-weight: 500;
+    }
+    
+    .logout-btn {
+      background-color: #430113;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .logout-btn:hover {
+      background-color: #5a0a1f;
+    }
+    
+    /* Область таблицы */
+    .table-wrapper {
+      flex-grow: 1;
+      padding: 25px;
+      overflow: auto;
+      background-color: #f5f7fa;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    th, td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    th {
+      background-color: #f9f9f9;
+      font-weight: 600;
+      color: #555;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    
+    tr[data-selected="true"] {
+      background-color: #fff0f0;
+    }
+    
+    /* Кнопки действий */
+    .actions {
+      padding: 15px 25px;
+      background-color: white;
+      display: flex;
+      justify-content: flex-end;
+      gap: 15px;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .actions button {
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .actions button:first-child {
+      background-color: #430113;
+      color: white;
+    }
+    
+    .actions button:nth-child(2) {
+      background-color: #2c5e1a;
+      color: white;
+    }
+    
+    .actions button:last-child {
+      background-color: #a10e2b;
+      color: white;
+    }
+    
+    .actions button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+    
+    /* Модальное окно */
+    #modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    #modalContent {
+      background: white;
+      border-radius: 12px;
+      width: 500px;
+      max-width: 95%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    #modalTitle {
+      padding: 20px;
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #430113;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    #modalForm {
+      padding: 20px;
+    }
+    
+    .modal-field {
+      margin-bottom: 20px;
+    }
+    
+    .modal-field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    .modal-field input,
+    .modal-field select,
+    .modal-field textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border 0.3s;
+    }
+    
+    .modal-field input:focus,
+    .modal-field select:focus,
+    .modal-field textarea:focus {
+      border-color: #430113;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(67, 1, 19, 0.1);
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 15px 20px;
+      border-top: 1px solid #f0f0f0;
+    }
+    
+    .modal-actions button {
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .modal-actions .save {
+      background-color: #430113;
+      color: white;
+      border: none;
+    }
+    
+    .modal-actions .cancel {
+      background-color: #f0f0f0;
+      color: #555;
+      border: none;
+    }
+    
+    .modal-actions .save:hover {
+      background-color: #5a0a1f;
+    }
+    
+    .modal-actions .cancel:hover {
+      background-color: #e0e0e0;
+    }
+    
+    /* Счетчик символов */
     .char-counter {
       font-size: 12px;
-      color: #666;
+      color: #777;
       text-align: right;
-      margin-top: 2px;
+      margin-top: 5px;
     }
+    
     .char-counter.limit-reached {
       color: #e74c3c;
     }
-    .modal-field {
-      margin-bottom: 15px;
+    
+    /* Стили для раздела настроек */
+    .settings-container {
+      display: none;
+      padding: 30px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+      margin: 20px;
     }
-    .modal-field label {
+    
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .settings-header h2 {
+      margin: 0;
+      color: #430113;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .settings-header h2 i {
+      color: #430113;
+    }
+    
+    .settings-tabs {
+      display: flex;
+      border-bottom: 1px solid #f0f0f0;
+      margin-bottom: 20px;
+    }
+    
+    .settings-tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #777;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+    }
+    
+    .settings-tab.active {
+      color: #430113;
+      border-bottom: 2px solid #430113;
+    }
+    
+    .settings-tab:hover {
+      color: #430113;
+    }
+    
+    .settings-content {
+      display: none;
+    }
+    
+    .settings-content.active {
       display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
     }
-    .modal-field input, 
-    .modal-field select, 
-    .modal-field textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
+    
+    .setting-group {
+      margin-bottom: 30px;
+    }
+    
+    .setting-group h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #430113;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    
+    .setting-item:last-child {
+      border-bottom: none;
+    }
+    
+    .setting-info {
+      flex: 1;
+    }
+    
+    .setting-info h4 {
+      margin: 0 0 5px 0;
+      font-size: 15px;
+      color: #333;
+    }
+    
+    .setting-info p {
+      margin: 0;
+      font-size: 13px;
+      color: #777;
+    }
+    
+    .setting-control {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #430113;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    .btn {
+      padding: 8px 15px;
       border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background-color: #430113;
+      color: white;
+      border: none;
+    }
+    
+    .btn-primary:hover {
+      background-color: #5a0a1f;
+    }
+    
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid #ddd;
+      color: #555;
+    }
+    
+    .btn-outline:hover {
+      background-color: #f5f5f5;
+    }
+    
+    /* Анимации */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* Кастомный скроллбар */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+    
+    /* Уведомление */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 5px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1001;
+      transform: translateX(150%);
+      transition: transform 0.3s ease;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+    
+    .notification.error {
+      background-color: #f44336;
+    }
+    
+    .notification.warning {
+      background-color: #ff9800;
+    }
+    
+    /* Темная тема */
+    .dark-mode {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+    }
+    
+    .dark-mode .sidebar {
+      background: linear-gradient(135deg, #2a0a1a 0%, #4a0a1a 100%);
+    }
+    
+    .dark-mode .topbar,
+    .dark-mode .table-wrapper,
+    .dark-mode .actions,
+    .dark-mode #modalContent,
+    .dark-mode .settings-container {
+      background-color: #252525;
+      color: #e0e0e0;
+    }
+    
+    .dark-mode table,
+    .dark-mode th,
+    .dark-mode td {
+      background-color: #2d2d2d;
+      color: #e0e0e0;
+      border-color: #3d3d3d;
+    }
+    
+    .dark-mode th {
+      background-color: #333;
+    }
+    
+    .dark-mode tr:hover {
+      background-color: #3a3a3a;
+    }
+    
+    .dark-mode tr[data-selected="true"] {
+      background-color: #3a1a1a;
+    }
+    
+    .dark-mode .modal-field input,
+    .dark-mode .modal-field select,
+    .dark-mode .modal-field textarea {
+      background-color: #333;
+      border-color: #444;
+      color: #e0e0e0;
+    }
+    
+    .dark-mode .modal-field input:focus,
+    .dark-mode .modal-field select:focus,
+    .dark-mode .modal-field textarea:focus {
+      border-color: #8a2a2a;
+      box-shadow: 0 0 0 3px rgba(138, 42, 42, 0.3);
+    }
+    
+    .dark-mode .settings-tab {
+      color: #aaa;
+    }
+    
+    .dark-mode .settings-tab.active,
+    .dark-mode .settings-tab:hover {
+      color: #ff9e9e;
+    }
+    
+    .dark-mode .setting-item {
+      border-color: #3d3d3d;
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 992px) {
+      .sidebar {
+        width: 70px;
+        overflow: hidden;
+      }
+      
+      .sidebar div span {
+        display: none;
+      }
+      
+      .sidebar-header h3 span {
+        display: none;
+      }
+      
+      .sidebar div {
+        justify-content: center;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        margin: 5px auto;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+      }
+      
+      .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 10px;
+      }
+      
+      .sidebar-header {
+        display: none;
+      }
+      
+      .sidebar div {
+        width: auto;
+        height: auto;
+        padding: 8px 12px;
+        border-radius: 20px;
+        margin: 5px;
+      }
+      
+      .sidebar-footer {
+        display: none;
+      }
+      
+      .table-wrapper {
+        padding: 15px;
+      }
+      
+      th, td {
+        padding: 10px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="sidebar">
-    <div onclick="loadTable('users')"><i class="fas fa-user"></i> Клиенты</div>
-    <div onclick="loadTable('staff')"><i class="fas fa-users"></i> Сотрудники</div>
-    <div onclick="loadTable('service')"><i class="fas fa-tools"></i> Услуги</div>
-    <div onclick="loadTable('role')"><i class="fas fa-user-tag"></i> Роли</div>
-    <div onclick="loadTable('customer_orders')"><i class="fas fa-box"></i> Заказы</div>
-    <div onclick="loadTable('processed_customer_orders')"><i class="fas fa-check-circle"></i> Обработанные</div>
-    <div onclick="loadTable('requests')"><i class="fas fa-envelope"></i> Заявки</div>
-    <div onclick="loadTable('foremen')"><i class="fas fa-hard-hat"></i> Начальники</div>
-    <div onclick="loadTable('status_orders')"><i class="fas fa-tasks"></i> Статусы</div>
-    <a href="report.html"><div><i class="fas fa-chart-bar"></i> Отчёты</div></a>
-    <div><i class="fas fa-cog"></i> Настройки</div>
+    <div class="sidebar-header">
+      <h3><i class="fas fa-cog"></i> <span>Админ-панель</span></h3>
+    </div>
+    
+    <div onclick="loadTable('users')"><i class="fas fa-user"></i> <span>Клиенты</span></div>
+    <div onclick="loadTable('staff')"><i class="fas fa-users"></i> <span>Сотрудники</span></div>
+    <div onclick="loadTable('service')"><i class="fas fa-tools"></i> <span>Услуги</span></div>
+    <div onclick="loadTable('role')"><i class="fas fa-user-tag"></i> <span>Роли</span></div>
+    <div onclick="loadTable('requests')"><i class="fas fa-envelope"></i> <span>Заявки</span></div>
+    <div onclick="loadTable('foremen')"><i class="fas fa-hard-hat"></i> <span>Начальники</span></div>
+    <div onclick="loadTable('status_orders')"><i class="fas fa-tasks"></i> <span>Статусы</span></div>
+    <a href="report.html"><div><i class="fas fa-chart-bar"></i> <span>Отчёты</span></div></a>
+    <div onclick="showSettings()" class="active"><i class="fas fa-cog"></i> <span>Настройки</span></div>
+    
+    <div class="sidebar-footer">
+      <span>EUROBULD © 2024</span>
+    </div>
   </div>  
+  
   <div class="main">
     <div class="topbar">
-      <a href="index.html"><div class="profile">Выйти</div></a>
+      <div class="profile">
+        <div class="profile-avatar">A</div>
+        <div class="profile-name">Администратор</div>
+      </div>
+      <button class="logout-btn" onclick="location.href='index.html'">
+        <i class="fas fa-sign-out-alt"></i> Выйти
+      </button>
     </div>
+    
     <div class="table-wrapper" id="tableContainer"></div>
+    
     <div class="actions">
-      <button onclick="openModal('add')">Добавить</button>
-      <button onclick="openModal('edit')">Изменить</button>
-      <button onclick="deleteRecord()">Удалить</button>
+      <button onclick="openModal('add')">
+        <i class="fas fa-plus"></i> Добавить
+      </button>
+      <button onclick="openModal('edit')">
+        <i class="fas fa-edit"></i> Изменить
+      </button>
+      <button onclick="deleteRecord()">
+        <i class="fas fa-trash"></i> Удалить
+      </button>
     </div>
   </div>
 
+  <!-- Раздел настроек -->
+  <div class="settings-container" id="settingsContainer">
+    <div class="settings-header">
+      <h2><i class="fas fa-cog"></i> Настройки системы</h2>
+      <div class="setting-control">
+        <label class="switch">
+          <input type="checkbox" id="darkModeToggle">
+          <span class="slider"></span>
+        </label>
+        <span>Темная тема</span>
+      </div>
+    </div>
+    
+    <div class="settings-tabs">
+      <div class="settings-tab active" onclick="openSettingsTab('general')">Основные</div>
+      <div class="settings-tab" onclick="openSettingsTab('security')">Безопасность</div>
+      <div class="settings-tab" onclick="openSettingsTab('appearance')">Внешний вид</div>
+      <div class="settings-tab" onclick="openSettingsTab('notifications')">Уведомления</div>
+    </div>
+    
+    <!-- Основные настройки -->
+    <div class="settings-content active" id="generalSettings">
+      <div class="setting-group">
+        <h3><i class="fas fa-info-circle"></i> Информация о системе</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Версия системы</h4>
+            <p>Текущая версия: 2.4.1</p>
+          </div>
+          <div class="setting-control">
+            <button class="btn btn-outline">Проверить обновления</button>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>База данных</h4>
+            <p>SQL Server 2019, размер: 45.7 MB</p>
+          </div>
+          <div class="setting-control">
+            <button class="btn btn-outline">Оптимизировать</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="setting-group">
+        <h3><i class="fas fa-sliders-h"></i> Основные параметры</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Название компании</h4>
+            <p>Отображается в заголовках и отчетах</p>
+          </div>
+          <div class="setting-control">
+            <input type="text" value="EUROBULD" style="width: 200px;">
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Язык интерфейса</h4>
+            <p>Выберите предпочитаемый язык</p>
+          </div>
+          <div class="setting-control">
+            <select style="width: 200px;">
+              <option>Русский</option>
+              <option>English</option>
+              <option>Deutsch</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Формат даты</h4>
+            <p>Как отображаются даты в системе</p>
+          </div>
+          <div class="setting-control">
+            <select style="width: 200px;">
+              <option>ДД.ММ.ГГГГ</option>
+              <option>ММ/ДД/ГГГГ</option>
+              <option>ГГГГ-ММ-ДД</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="setting-group">
+        <h3><i class="fas fa-database"></i> Резервное копирование</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Последняя резервная копия</h4>
+            <p>15.06.2024 14:30 (размер: 32.4 MB)</p>
+          </div>
+          <div class="setting-control">
+            <button class="btn btn-primary">Создать сейчас</button>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Автоматическое копирование</h4>
+            <p>Создавать резервные копии ежедневно в 00:00</p>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Настройки безопасности -->
+    <div class="settings-content" id="securitySettings">
+      <div class="setting-group">
+        <h3><i class="fas fa-shield-alt"></i> Параметры безопасности</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Сложность паролей</h4>
+            <p>Требования к паролям пользователей</p>
+          </div>
+          <div class="setting-control">
+            <select style="width: 200px;">
+              <option>Средний (6 символов)</option>
+              <option>Высокий (8 символов, цифры)</option>
+              <option>Очень высокий (10 символов, цифры, спецсимволы)</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Блокировка после неудачных попыток</h4>
+            <p>Блокировать учетную запись после 5 неудачных попыток входа</p>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Двухфакторная аутентификация</h4>
+            <p>Требовать подтверждение по SMS или email</p>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="setting-group">
+        <h3><i class="fas fa-user-lock"></i> Доступ администратора</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Сменить пароль администратора</h4>
+            <p>Рекомендуется менять пароль каждые 3 месяца</p>
+          </div>
+          <div class="setting-control">
+            <button class="btn btn-primary">Сменить пароль</button>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Журнал активности</h4>
+            <p>Последние действия администраторов</p>
+          </div>
+          <div class="setting-control">
+            <button class="btn btn-outline">Просмотреть</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Настройки внешнего вида -->
+    <div class="settings-content" id="appearanceSettings">
+      <div class="setting-group">
+        <h3><i class="fas fa-palette"></i> Цветовая схема</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Основной цвет</h4>
+            <p>Цвет акцентов и кнопок</p>
+          </div>
+          <div class="setting-control">
+            <input type="color" value="#430113" style="width: 40px; height: 30px;">
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Стиль меню</h4>
+            <p>Внешний вид бокового меню</p>
+          </div>
+          <div class="setting-control">
+            <select style="width: 200px;">
+              <option>Стандартный</option>
+              <option>Компактный</option>
+              <option>Минималистичный</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Плотность интерфейса</h4>
+            <p>Расстояние между элементами</p>
+          </div>
+          <div class="setting-control">
+            <select style="width: 200px;">
+              <option>Комфортный</option>
+              <option>Стандартный</option>
+              <option>Компактный</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="setting-group">
+        <h3><i class="fas fa-font"></i> Шрифты</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Основной шрифт</h4>
+            <p>Шрифт для всего интерфейса</p>
+          </div>
+          <div class="setting-control">
+            <select style="width: 200px;">
+              <option>Segoe UI</option>
+              <option>Roboto</option>
+              <option>Open Sans</option>
+              <option>Arial</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Размер шрифта</h4>
+            <p>Базовый размер текста</p>
+          </div>
+          <div class="setting-control">
+            <select style="width: 200px;">
+              <option>Мелкий (12px)</option>
+              <option selected>Стандартный (14px)</option>
+              <option>Крупный (16px)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Настройки уведомлений -->
+    <div class="settings-content" id="notificationsSettings">
+      <div class="setting-group">
+        <h3><i class="fas fa-bell"></i> Уведомления</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Email-уведомления</h4>
+            <p>Получать важные уведомления на email</p>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Email для уведомлений</h4>
+            <p>Куда отправлять системные уведомления</p>
+          </div>
+          <div class="setting-control">
+            <input type="email" value="admin@eurobuld.com" style="width: 200px;">
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Звуковые уведомления</h4>
+            <p>Проигрывать звук при новых событиях</p>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="setting-group">
+        <h3><i class="fas fa-envelope"></i> События для уведомлений</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Новые заказы</h4>
+            <p>Уведомлять о поступлении новых заказов</p>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Изменение статусов</h4>
+            <p>Уведомлять об изменении статуса заказа</p>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Критические ошибки</h4>
+            <p>Уведомлять о критических ошибках системы</p>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="settings-actions">
+      <button class="btn btn-primary" style="margin-right: 10px;">
+        <i class="fas fa-save"></i> Сохранить изменения
+      </button>
+      <button class="btn btn-outline">
+        <i class="fas fa-times"></i> Отменить
+      </button>
+    </div>
+  </div>
+
+  <!-- Модальное окно -->
   <div id="modal">
     <div id="modalContent">
       <h3 id="modalTitle">Добавить запись</h3>
@@ -83,35 +1177,89 @@
       </form>
     </div>
   </div>
+  
+  <!-- Уведомление -->
+  <div class="notification" id="notification">
+    <i class="fas fa-check-circle"></i>
+    <span id="notificationText">Успешно сохранено!</span>
+  </div>
 
   <script>
     let currentTable = 'users';
     let tableData = [];
     let rolesData = [];
     let statusesData = [];
-
-    async function loadStatuses() {
-      if (statusesData.length === 0) {
-        const res = await fetch('/api/status_orders');
-        statusesData = await res.json();
-      }
-      return statusesData;
+    
+    // Показать уведомление
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      const notificationText = document.getElementById('notificationText');
+      
+      notificationText.textContent = message;
+      notification.className = 'notification';
+      notification.classList.add(type);
+      notification.classList.add('show');
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
     }
-    async function loadRoles() {
-      const res = await fetch('/api/role');
-      rolesData = await res.json();
+    
+    // Показать раздел настроек
+    function showSettings() {
+      document.getElementById('tableContainer').style.display = 'none';
+      document.querySelector('.actions').style.display = 'none';
+      document.getElementById('settingsContainer').style.display = 'block';
     }
-    loadRoles();
-
+    
+    // Переключение между вкладками настроек
+    function openSettingsTab(tabId) {
+      // Скрыть все вкладки
+      document.querySelectorAll('.settings-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Убрать активный класс у всех табов
+      document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Показать выбранную вкладку
+      document.getElementById(tabId + 'Settings').classList.add('active');
+      
+      // Сделать активной кнопку таба
+      event.target.classList.add('active');
+    }
+    
+    // Переключение темной темы
+    document.getElementById('darkModeToggle').addEventListener('change', function() {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', this.checked);
+      showNotification(this.checked ? 'Темная тема включена' : 'Темная тема выключена');
+    });
+    
+    // Проверить сохраненную тему при загрузке
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.getElementById('darkModeToggle').checked = true;
+      document.body.classList.add('dark-mode');
+    }
+    
+    // Загрузка таблицы
     async function loadTable(type) {
       currentTable = type;
+      
+      // Скрыть настройки, показать таблицу
+      document.getElementById('settingsContainer').style.display = 'none';
+      document.getElementById('tableContainer').style.display = 'block';
+      document.querySelector('.actions').style.display = 'flex';
+      
       let url = `/api/${type}`;
       const res = await fetch(url);
       const data = await res.json();
       tableData = data;
 
       if (!Array.isArray(data) || data.length === 0) {
-        document.getElementById('tableContainer').innerHTML = '<p>Нет данных</p>';
+        document.getElementById('tableContainer').innerHTML = '<div class="no-data">Нет данных для отображения</div>';
         return;
       }
 
@@ -135,151 +1283,196 @@
 
       html += '</tbody></table>';
       document.getElementById('tableContainer').innerHTML = html;
+      
+      // Обновить активный пункт меню
+      document.querySelectorAll('.sidebar div').forEach(div => {
+        div.classList.remove('active');
+      });
+      document.querySelector(`.sidebar div:nth-child(${getMenuIndex(type)})`).classList.add('active');
+    }
+    
+    function getMenuIndex(type) {
+      const menuItems = ['users', 'staff', 'service', 'role', 'requests', 'foremen', 'status_orders', 'reports', 'settings'];
+      return menuItems.indexOf(type) + 3; // +3 потому что первые два элемента - заголовок и разделитель
     }
 
     const fieldConstraints = {
-        'users': {
-            'Email': { maxLength: 40, type: 'text' },
-            'Password': { maxLength: 255, type: 'text' },
-            'Number_Phone': { maxLength: 20, type: 'text' },
-            'Address': { maxLength: 20, type: 'text' },
-            'First_name': { maxLength: 20, type: 'text' },
-            'Last_name': { maxLength: 20, type: 'text' },
-            'Patronymic': { maxLength: 20, type: 'text' },
-            'Passport_details': { maxLength: 20, type: 'text' }
-        },
-        'staff': {
-            'Email': { maxLength: 40, type: 'text' },
-            'Password': { maxLength: 255, type: 'text' },
-            'First_name': { maxLength: 20, type: 'text' },
-            'Last_name': { maxLength: 20, type: 'text' },
-            'Patronymic': { maxLength: 20, type: 'text' },
-            'Passport_details': { maxLength: 20, type: 'text' },
-            'Date_birth': { type: 'date' },
-            'Date_employment': { type: 'date' }
-        },
-        'service': {
-            'Item_Name': { maxLength: 100, type: 'text' },
-            'Item_Description': { maxLength: 500, type: 'text' },
-            'Price': { min: 0, max: 999999.99, type: 'number', step: 0.01 }
-        },
-        'processed_customer_orders': {
-            'Final_sum': { min: 0, max: 999999.99, type: 'number', step: 0.01 },
-            'Date_Start': { type: 'date' },
-            'Date_Ending': { type: 'date' }
-        },
-        'role': {
-            'roll_name': { maxLength: 50, type: 'text' },
-            'salary': { min: 0, max: 999999.99, type: 'number', step: 0.01 }
-        }
+      'users': {
+        'Email': { maxLength: 40, type: 'text' },
+        'Password': { maxLength: 255, type: 'text' },
+        'Number_Phone': { maxLength: 20, type: 'text' },
+        'Address': { maxLength: 20, type: 'text' },
+        'First_name': { maxLength: 20, type: 'text' },
+        'Last_name': { maxLength: 20, type: 'text' },
+        'Patronymic': { maxLength: 20, type: 'text' },
+        'Passport_details': { maxLength: 20, type: 'text' }
+      },
+      'staff': {
+        'Email': { maxLength: 40, type: 'text' },
+        'Password': { maxLength: 255, type: 'text' },
+        'First_name': { maxLength: 20, type: 'text' },
+        'Last_name': { maxLength: 20, type: 'text' },
+        'Patronymic': { maxLength: 20, type: 'text' },
+        'Passport_details': { maxLength: 20, type: 'text' },
+        'Date_birth': { type: 'date' },
+        'Date_employment': { type: 'date' }
+      },
+      'service': {
+        'Item_Name': { maxLength: 100, type: 'text' },
+        'Item_Description': { maxLength: 500, type: 'text' },
+        'Price': { min: 0, max: 999999.99, type: 'number', step: 0.01 }
+      },
+      'role': {
+        'roll_name': { maxLength: 50, type: 'text' },
+        'salary': { min: 0, max: 999999.99, type: 'number', step: 0.01 }
+      },
+      'customer_orders': {
+        'Order_Date': { type: 'date' },
+        'Status': { maxLength: 50, type: 'text' }
+      },
+      'processed_customer_orders': {
+        'Final_sum': { min: 0, max: 999999.99, type: 'number', step: 0.01 },
+        'Date_Start': { type: 'date' },
+        'Date_Ending': { type: 'date' }
+      },
+      'foremen': {
+        'First_Name': { maxLength: 50, type: 'text' },
+        'Last_Name': { maxLength: 50, type: 'text' },
+        'Patronymic': { maxLength: 50, type: 'text' },
+        'Number_of_Workers': { type: 'number', min: 0 },
+        'Number_phone': { maxLength: 20, type: 'text' }
+      },
+      'status_orders': {
+        'Name_Status': { maxLength: 50, type: 'text' }
+      },
+      'requests': {
+        'First_name': { maxLength: 50, type: 'text' },
+        'Last_name': { maxLength: 50, type: 'text' },
+        'Email': { maxLength: 100, type: 'text' },
+        'Additional_Info': { maxLength: 500, type: 'text' },
+        'Status': { maxLength: 50, type: 'text' },
+        'Request_Date': { type: 'date' }
+      }
     };
 
-    // Функция для создания поля ввода с информацией об ограничениях
     function createInputWithConstraints(key, value, tableName) {
-        const constraints = fieldConstraints[tableName]?.[key] || { type: 'text', maxLength: 255 };
-        const container = document.createElement('div');
-        container.className = 'modal-field';
+      const constraints = fieldConstraints[tableName]?.[key] || { type: 'text', maxLength: 255 };
+      const container = document.createElement('div');
+      container.className = 'modal-field';
+      
+      const label = document.createElement('label');
+      label.textContent = key;
+      container.appendChild(label);
+      
+      let input;
+      if (constraints.type === 'select') {
+        input = document.createElement('select');
+        input.name = key;
+        input.required = true;
+      } else {
+        input = document.createElement('input');
+        input.name = key;
+        input.type = constraints.type;
         
-        const label = document.createElement('label');
-        label.textContent = key;
-        container.appendChild(label);
-        
-        let input;
-        if (constraints.type === 'select') {
-            // Обработка выпадающих списков
-            input = document.createElement('select');
-            input.name = key;
-            input.required = true;
-            // Здесь можно добавить options если нужно
+        if (constraints.type === 'date' && value) {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            const formattedDate = date.toISOString().split('T')[0];
+            input.value = formattedDate;
+          }
         } else {
-            input = document.createElement('input');
-            input.name = key;
-            input.type = constraints.type;
-            input.value = value || '';
-            
-            if (constraints.type === 'text' && constraints.maxLength) {
-                input.maxLength = constraints.maxLength;
-            }
-            if (constraints.type === 'number') {
-                if (constraints.min !== undefined) input.min = constraints.min;
-                if (constraints.max !== undefined) input.max = constraints.max;
-                if (constraints.step !== undefined) input.step = constraints.step;
-            }
+          input.value = value || '';
         }
-        
-        container.appendChild(input);
-        
-        const info = document.createElement('div');
-        info.className = 'field-info';
         
         if (constraints.type === 'text' && constraints.maxLength) {
-            
-            // Добавляем счетчик только для текстовых полей с ограничением длины
-            const counter = document.createElement('div');
-            counter.className = 'char-counter';
-            counter.id = `counter-${key}`;
-            counter.textContent = `${value?.length || 0}/${constraints.maxLength}`;
-            container.appendChild(counter);
-            
-            input.addEventListener('input', function() {
-                const currentLength = this.value.length;
-                counter.textContent = `${currentLength}/${constraints.maxLength}`;
-                
-                if (currentLength >= constraints.maxLength) {
-                    counter.classList.add('limit-reached');
-                } else {
-                    counter.classList.remove('limit-reached');
-                }
-            });
-            
-            input.dispatchEvent(new Event('input'));
-        } 
-        else if (constraints.type === 'number') {
-            if (constraints.min !== undefined && constraints.max !== undefined) {
-                info.textContent = `Допустимый диапазон: ${constraints.min} — ${constraints.max}`;
-            } else if (constraints.min !== undefined) {
-                info.textContent = `Минимальное значение: ${constraints.min}`;
-            } else if (constraints.max !== undefined) {
-                info.textContent = `Максимальное значение: ${constraints.max}`;
-            }
+          input.maxLength = constraints.maxLength;
         }
-        else if (constraints.type === 'date') {
-            info.textContent = `Формат даты: ГГГГ-ММ-ДД`;
+        if (constraints.type === 'number') {
+          if (constraints.min !== undefined) input.min = constraints.min;
+          if (constraints.max !== undefined) input.max = constraints.max;
+          if (constraints.step !== undefined) input.step = constraints.step;
         }
+      }
+      
+      container.appendChild(input);
+      
+      const info = document.createElement('div');
+      info.className = 'field-info';
+      
+      if (constraints.type === 'text' && constraints.maxLength) {
+        const counter = document.createElement('div');
+        counter.className = 'char-counter';
+        counter.id = `counter-${key}`;
+        counter.textContent = `${value?.length || 0}/${constraints.maxLength}`;
+        container.appendChild(counter);
         
-        container.appendChild(info);
+        input.addEventListener('input', function() {
+          const currentLength = this.value.length;
+          counter.textContent = `${currentLength}/${constraints.maxLength}`;
+          
+          if (currentLength >= constraints.maxLength) {
+            counter.classList.add('limit-reached');
+          } else {
+            counter.classList.remove('limit-reached');
+          }
+        });
         
-        return container;
+        input.dispatchEvent(new Event('input'));
+      } 
+      else if (constraints.type === 'number') {
+        if (constraints.min !== undefined && constraints.max !== undefined) {
+          info.textContent = `Допустимый диапазон: ${constraints.min} — ${constraints.max}`;
+        } else if (constraints.min !== undefined) {
+          info.textContent = `Минимальное значение: ${constraints.min}`;
+        } else if (constraints.max !== undefined) {
+          info.textContent = `Максимальное значение: ${constraints.max}`;
+        }
+      }
+      else if (constraints.type === 'date') {
+        info.textContent = `Формат даты: ГГГГ-ММ-ДД`;
+      }
+      
+      container.appendChild(info);
+      
+      return container;
     }
 
     function selectRow(row) {
-      document.querySelectorAll('tr').forEach(r => r.style.backgroundColor = '');
-      row.style.backgroundColor = '#ffe0e0';
-      row.setAttribute('data-selected', 'true');
-    }
+  // Снимаем выделение со всех строк
+  document.querySelectorAll('tr').forEach(r => {
+    r.style.backgroundColor = '';
+    r.removeAttribute('data-selected');
+  });
+  
+  // Выделяем текущую строку
+  row.style.backgroundColor = '#ffe0e0';
+  row.setAttribute('data-selected', 'true');
+}
 
     function getSelectedRowData() {
       const selected = document.querySelector('tr[data-selected="true"]');
       if (!selected) return null;
       
+      const cells = selected.cells;
       const keys = Object.keys(tableData[0]);
       const data = {};
       
       keys.forEach((key, i) => {
-        const cell = selected.children[i];
-        if (key === 'ImageBase64' && cell.querySelector('img')) {
-          // Для изображений берем src
-          data[key] = cell.querySelector('img').src.split(',')[1];
+        // Обработка изображения
+        if (key === 'ImageBase64') {
+          const img = cells[i].querySelector('img');
+          if (img) {
+            data[key] = img.src.split(',')[1]; // Извлекаем base64 без префикса
+          }
         } else {
-          // Для обычных ячеек - текстовое содержимое
-          data[key] = cell.textContent;
+          data[key] = cells[i].textContent;
         }
       });
       
       return data;
     }
 
-    function openModal(mode) {
+    async function openModal(mode) {
       const modal = document.getElementById('modal');
       const formFields = document.getElementById('formFields');
       const modalTitle = document.getElementById('modalTitle');
@@ -287,33 +1480,56 @@
 
       let data = mode === 'edit' ? getSelectedRowData() : {};
       if (mode === 'edit' && !data) {
-        return alert('Выберите строку для изменения.');
+        showNotification('Выберите строку для изменения', 'error');
+        return;
       }
 
       modalTitle.textContent = mode === 'edit' ? 'Изменить запись' : 'Добавить запись';
 
-      // Обработка специальных случаев
-      if (currentTable === 'service') {
-  for (let key in tableData[0]) {
-    if (key === 'ImageBase64') {
-      formFields.innerHTML += `
-        <div class="modal-field">
-          <label>Фото</label>
-          <input type="file" name="ImageBase64" accept="image/*" />
-          ${data[key] ? `<img src="data:image/jpeg;base64,${data[key]}" style="max-width: 100px; margin-top: 10px;"/>` : ''}
-        </div>
-      `;
-    } else if (!key.toLowerCase().includes('id')) {
-      formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
-    }
-  }
-}else if (currentTable === 'processed_customer_orders') {
-        loadStatuses().then(statuses => {
+      // Загружаем дополнительные данные, если нужно
+      if (currentTable === 'processed_customer_orders') {
+        await loadStatuses();
+      }
+      if (currentTable === 'staff') {
+        await loadRoles();
+      }
+
+      switch(currentTable) {
+    case 'service':
+      const serviceData = mode === 'edit' ? getSelectedRowData() : {};
+      
+      // Создаём поля формы
+      for (let key in tableData[0]) {
+        if (key === 'ImageBase64') {
+          formFields.innerHTML += `
+            <div class="modal-field">
+              <label>Фото</label>
+              <input type="file" name="ImageBase64" accept="image/*" id="imageUpload" />
+              ${serviceData[key] ? `
+                <div style="margin-top: 10px;">
+                  <img src="data:image/jpeg;base64,${serviceData[key]}" 
+                       style="max-width: 100px; max-height: 100px;"/>
+                  <button type="button" onclick="document.getElementById('imageUpload').value = ''; this.previousElementSibling.remove()">
+                    Удалить
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        } else if (!key.toLowerCase().includes('id')) {
+          // Для остальных полей
+          const fieldValue = serviceData[key] || '';
+          formFields.appendChild(createInputWithConstraints(key, fieldValue, currentTable));
+        }
+      }
+      break;
+
+        case 'processed_customer_orders':
           formFields.innerHTML = `
             <div class="modal-field">
               <label>Статус</label>
               <select name="ID_Status_Orders" required>
-                ${statuses.map(status => 
+                ${statusesData.map(status => 
                   `<option value="${status.ID_Status_Orders}" ${data.ID_Status_Orders == status.ID_Status_Orders ? 'selected' : ''}>
                     ${status.Name_Status}
                   </option>`
@@ -331,58 +1547,60 @@
             <div class="modal-field">
               <label>Итоговая сумма</label>
               <input type="number" step="0.01" name="Final_sum" value="${data.Final_sum || ''}" required />
-              <div class="char-counter">Числовое поле</div>
             </div>
           `;
-          document.getElementById('recordId').value = data?.ID_Processed_customer_orders || '';
-          modal.style.display = 'flex';
-        });
-        return;
-      } else if (currentTable === 'staff') {
-        const currentRoleId = data?.ID_Role || '';
-        const roleOptions = rolesData.map(role =>
-          `<option value="${role.ID_Role}" ${role.ID_Role == currentRoleId ? 'selected' : ''}>${role.roll_name}</option>`
-        ).join('');
+          break;
+        case 'role':
+          for (let key in tableData[0]) {
+            if (key === 'ID_Role') continue;
+            formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
+          }
+          break;
+        case 'staff':
+          const currentRoleId = data?.ID_Role || '';
+          const roleOptions = rolesData.map(role =>
+            `<option value="${role.ID_Role}" ${role.ID_Role == currentRoleId ? 'selected' : ''}>${role.roll_name}</option>`
+          ).join('');
 
-        formFields.innerHTML += `
-          <div class="modal-field">
-            <label>Роль</label>
-            <select name="ID_Role" required>${roleOptions}</select>
-            <div class="char-counter">Выпадающий список</div>
-          </div>
-        `;
+          formFields.innerHTML += `
+            <div class="modal-field">
+              <label>Роль</label>
+              <select name="ID_Role" required>${roleOptions}</select>
+            </div>
+          `;
 
-        for (let key in tableData[0]) {
-          if (['ID_Staff', 'ID_Role', 'roll_name'].includes(key)) continue;
-        formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
-      }
-      } else {
-        for (let key in tableData[0]) {
-          if (key.toLowerCase().includes('id')) continue;
-          
-          // Для числовых полей и дат не показываем счетчик
-          if (key === 'Final_sum' || key === 'Price' || key === 'salary' || 
-              key === 'Date_Start' || key === 'Date_Ending' || key === 'Date_birth' || 
-              key === 'Date_employment' || key === 'Order_Date') {
-            formFields.innerHTML += `
-              <div class="modal-field">
-                <label>${key}</label>
-                <input name="${key}" value="${data?.[key] || ''}" 
-                  ${key.includes('Date') ? 'type="date"' : 'type="number" step="0.01"'} 
-                  required />
-                <div class="char-counter">${key.includes('Date') ? 'Дата' : 'Числовое поле'}</div>
-              </div>
-            `;
-          } else {
-        formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
-      }
-        }
+          for (let key in tableData[0]) {
+            if (['ID_Staff', 'ID_Role', 'roll_name'].includes(key)) continue;
+            formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
+          }
+          break;
+
+        default:
+          // Общий случай для всех таблиц
+          for (let key in tableData[0]) {
+            if (key.toLowerCase().includes('id')) continue;
+            
+            if (key === 'Final_sum' || key === 'Price' || key === 'salary' || 
+                key === 'Date_Start' || key === 'Date_Ending' || key === 'Date_birth' || 
+                key === 'Date_employment' || key === 'Order_Date') {
+              formFields.innerHTML += `
+                <div class="modal-field">
+                  <label>${key}</label>
+                  <input name="${key}" value="${data?.[key] || ''}" 
+                    ${key.includes('Date') ? 'type="date"' : 'type="number" step="0.01"'} 
+                    required />
+                </div>
+              `;
+            } else {
+              formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
+            }
+          }
       }
 
-      document.getElementById('recordId').value = data?.[Object.keys(data)[0]] || '';
+      // Устанавливаем ID записи для редактирования
+      document.getElementById('recordId').value = data?.[Object.keys(tableData[0])[0]] || '';
       modal.style.display = 'flex';
     }
-
 
     function closeModal() {
       document.getElementById('modal').style.display = 'none';
@@ -393,18 +1611,31 @@
       const form = e.target;
       const data = {};
       const fileInput = form.querySelector('input[type="file"]');
+      const id = form.querySelector('#recordId').value;
 
-      for (let input of form.querySelectorAll('input[name]:not([type="file"]), select[name]')) {
-        data[input.name] = input.value;
-      }
+      // Собираем данные из формы
+      for (let input of form.querySelectorAll('input[name]:not([type="file"]), select[name], textarea[name]')) {
+    data[input.name] = input.value;
+  }
 
+  // Обработка файла изображения
+  if (fileInput && fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const base64 = await fileToBase64(file);
+    data.ImageBase64 = base64.split(',')[1];
+  } else if (form.querySelector('img')) {
+    // Если изображение было, но не изменялось
+    const imgSrc = form.querySelector('img').src;
+    data.ImageBase64 = imgSrc.split(',')[1];
+  }
+
+      // Обработка файла изображения
       if (fileInput && fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const base64 = await fileToBase64(file);
         data.ImageBase64 = base64.split(',')[1];
       }
 
-      const id = form.querySelector('#recordId').value;
       const method = id ? 'PUT' : 'POST';
       const url = `/api/${currentTable}${id ? '/' + id : ''}`;
 
@@ -414,17 +1645,18 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
+        
         if (response.ok) {
-          alert('Запись успешно сохранена!');
+          showNotification('Запись успешно сохранена!');
           closeModal();
           loadTable(currentTable);
         } else {
           const error = await response.text();
-          alert(`Ошибка: ${error}`);
+          showNotification(`Ошибка: ${error}`, 'error');
         }
       } catch (error) {
         console.error('Ошибка при отправке:', error);
-        alert('Ошибка при добавлении записи.');
+        showNotification('Ошибка при сохранении записи', 'error');
       }
     });
 
@@ -438,16 +1670,57 @@
     }
 
     async function deleteRecord() {
-      const data = getSelectedRowData();
-      if (!data) return alert('Выберите строку для удаления');
-      const id = Object.values(data)[0];
-      const confirmed = confirm('Удалить выбранную запись?');
-      if (!confirmed) return;
-      await fetch(`/api/${currentTable}/${id}`, { method: 'DELETE' });
-      loadTable(currentTable);
+      const selected = getSelectedRowData();
+      if (!selected) {
+        showNotification('Выберите запись для удаления', 'error');
+        return;
+      }
+
+      if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+        return;
+      }
+
+      const id = selected[Object.keys(selected)[0]];
+      
+      try {
+        const response = await fetch(`/api/${currentTable}/${id}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          showNotification('Запись успешно удалена');
+          loadTable(currentTable);
+        } else {
+          const error = await response.text();
+          showNotification(`Ошибка при удалении: ${error}`, 'error');
+        }
+      } catch (error) {
+        console.error('Ошибка при удалении:', error);
+        showNotification('Ошибка при удалении записи', 'error');
+      }
     }
 
-    loadTable('users');
+    async function loadStatuses() {
+      if (statusesData.length === 0) {
+        const res = await fetch('/api/status_orders');
+        statusesData = await res.json();
+      }
+      return statusesData;
+    }
+    
+    async function loadRoles() {
+      const res = await fetch('/api/role');
+      rolesData = await res.json();
+    }
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTable('users');
+      loadRoles();
+      
+      // Скрыть настройки по умолчанию
+      document.getElementById('settingsContainer').style.display = 'none';
+    });
   </script>
 </body>
 </html>

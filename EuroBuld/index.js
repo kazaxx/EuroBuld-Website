@@ -679,6 +679,94 @@ const express = require('express');
     requests: 'ID_Request'
   };
 
+  // Обновление записи в таблице service
+app.put('/api/service/:id', async (req, res) => {
+  const { id } = req.params;
+  const data = req.body;
+
+  try {
+    // Проверяем существование записи
+    const checkResult = await app.locals.db.request()
+      .input('id', mssql.Int, id)
+      .query('SELECT 1 FROM Service WHERE ID_Service = @id');
+    
+    if (checkResult.recordset.length === 0) {
+      return res.status(404).send('Запись не найдена');
+    }
+
+    // Валидация данных
+    const schema = Joi.object({
+      Item_Name: Joi.string().max(100).required(),
+      Item_Description: Joi.string().max(500).optional(),
+      Price: Joi.number().min(0).max(999999.99).precision(2).required(),
+      ImageBase64: Joi.string().optional() // Баз64 строка изображения
+    });
+
+    const { error } = schema.validate(data);
+    if (error) {
+      return res.status(400).send(error.details[0].message);
+    }
+
+    // Подготовка данных для обновления
+    const updateFields = {
+      Item_Name: data.Item_Name,
+      Item_Description: data.Item_Description || null,
+      Price: data.Price
+    };
+
+    // Если есть новое изображение, конвертируем его в бинарный формат
+    if (data.ImageBase64) {
+      updateFields.Image = Buffer.from(data.ImageBase64, 'base64');
+    }
+
+    // Формируем SQL запрос
+    let query = 'UPDATE Service SET ';
+    const params = [];
+    
+    Object.keys(updateFields).forEach((key, index) => {
+      query += `${key} = @${key}${index < Object.keys(updateFields).length - 1 ? ', ' : ''}`;
+      params.push({ name: key, value: updateFields[key] });
+    });
+
+    query += ' WHERE ID_Service = @id';
+
+    // Выполняем запрос
+    const request = app.locals.db.request();
+    params.forEach(param => {
+      if (param.name === 'Image') {
+        request.input(param.name, mssql.VarBinary, param.value);
+      } else {
+        request.input(param.name, param.value);
+      }
+    });
+    request.input('id', mssql.Int, id);
+
+    await request.query(query);
+
+    // Получаем обновленную запись для ответа
+    const updatedRecord = await app.locals.db.request()
+      .input('id', mssql.Int, id)
+      .query(`
+        SELECT 
+          ID_Service, 
+          Item_Name, 
+          Item_Description, 
+          Price,
+          CAST('' AS XML).value(
+            'xs:base64Binary(xs:hexBinary(sql:column("Image")))',
+            'VARCHAR(MAX)'
+          ) AS ImageBase64
+        FROM Service
+        WHERE ID_Service = @id
+      `);
+
+    res.status(200).json(updatedRecord.recordset[0]);
+  } catch (error) {
+    console.error('Ошибка при обновлении услуги:', error);
+    res.status(500).send('Ошибка сервера при обновлении услуги');
+  }
+});
+
   //Обновления записи в таблицы datagrid(админ панель)
   app.put('/api/:table/:id', async (req, res) => {
     const { table, id } = req.params;

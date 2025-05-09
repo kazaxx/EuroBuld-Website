@@ -1,185 +1,822 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title></title>
-  <link rel="stylesheet" href="css/styele.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EuroBuld - Услуга</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #430113;
+            --secondary-color: #560019;
+            --text-dark: #131416;
+            --text-light: #777e90;
+            --bg-light: #f4f7fc;
+            --white: #ffffff;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding-top: 90px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 18px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-links a:hover, 
+        .nav-links a.active {
+            color: var(--primary-color);
+        }
+
+        .nav-links a.active:after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .auth-buttons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-outline {
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            background: transparent;
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .user-profile {
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-profile a {
+            color: var(--primary-color);
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        /* Product Page Styles */
+        .wrapper {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .product-container {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            margin-bottom: 50px;
+        }
+
+        .product-card {
+            display: flex;
+            gap: 40px;
+        }
+
+        .image-wrapper {
+            flex: 1;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            object-fit: cover;
+        }
+
+        .info-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .info-wrapper h2 {
+            font-size: 32px;
+            margin: 0 0 20px;
+            color: var(--primary-color);
+        }
+
+        .price {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+
+        .info-wrapper p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--text-dark);
+            margin-bottom: 30px;
+        }
+
+        .buy-btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            align-self: flex-start;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .buy-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .buy-btn i {
+            font-size: 20px;
+        }
+
+        /* Recommended Section */
+        .recommended-section {
+            max-width: 1200px;
+            margin: 0 auto 50px;
+            padding: 0 20px;
+        }
+
+        .recommended-section h2 {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .recommended-container {
+            display: flex;
+            gap: 25px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding: 20px 0;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .recommended-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .recommended-card {
+            flex: 0 0 280px;
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+            scroll-snap-align: start;
+        }
+
+        .recommended-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .recommended-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .recommended-card h3 {
+            font-size: 18px;
+            margin: 15px 15px 5px;
+            color: var(--text-dark);
+        }
+
+        .recommended-card .price {
+            font-size: 18px;
+            margin: 0 15px 15px;
+            color: var(--primary-color);
+        }
+
+        .details-btn {
+            display: block;
+            margin: 0 15px 15px;
+            padding: 8px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .details-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .swipe-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .swipe-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .swipe-btn:hover {
+            background-color: var(--secondary-color);
+            transform: scale(1.1);
+        }
+
+        /* Features Section */
+        .features {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 40px 0;
+            padding: 30px;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            max-width: 250px;
+        }
+
+        .feature i {
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .feature-text h3 {
+            margin: 0 0 5px;
+            font-size: 18px;
+        }
+
+        .feature-text p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 80%;
+            max-width: 300px;
+            height: 100vh;
+            background-color: var(--white);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1100;
+            transition: var(--transition);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mobile-menu.active {
+            left: 0;
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .close-menu-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mobile-nav-links a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 18px;
+            padding: 10px 0;
+        }
+
+        .mobile-auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: auto;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1050;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .product-card {
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .image-wrapper img {
+                max-width: 100%;
+            }
+
+            .buy-btn {
+                align-self: center;
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links,
+            .auth-buttons,
+            .user-profile {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .wrapper {
+                margin-top: 20px;
+                padding: 0 15px;
+            }
+
+            .product-container {
+                padding: 20px;
+            }
+
+            .info-wrapper h2 {
+                font-size: 24px;
+            }
+
+            .price {
+                font-size: 22px;
+            }
+
+            .features {
+                flex-direction: column;
+                align-items: center;
+                padding: 20px;
+            }
+
+            .feature {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 15px 20px;
+            }
+
+            .info-wrapper h2 {
+                font-size: 22px;
+            }
+
+            .price {
+                font-size: 20px;
+            }
+
+            .info-wrapper p {
+                font-size: 16px;
+            }
+
+            .buy-btn {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            .recommended-section h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header class="navbar">
-    <div class="left-wrapper">
-      <div class="left-menu">
-        <a href="index.html" class="nav-link">Главная</a>
-        <a href="service.html" class="nav-link-2">Услуги</a>
-        <a href="AboutUs.html" class="nav-link">О нас</a>
-        <a href="contact.html" class="nav-link">Контакты</a>
-      </div>
-      <img src="images/Screenshot_2.png" class="poloska" width="440" height="7">
-    </div>
-  
-    <div class="right-menu">
-      <button class="auth-btn">Вход</button>
-      <button class="auth-btn-2">Регистрация</button>
-    </div>
-  </header>  
-
-  <div class="wrapper">
-    <div id="product-container" class="product-container"></div>
-  </div>
-
-  <div class="recommended-container" id="recommended">
-  </div>
-
-  <div class="swipe-buttons">
-    <button class="swipe-btn" id="prevBtn">←</button>
-    <button class="swipe-btn" id="nextBtn">→</button>
-  </div>
-
-<script>
-  function getQueryParam(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(param);
-  }
-
-  async function fetchProductById(id) {
-    try {
-      const response = await fetch(`/api/service/${id}`);
-      if (!response.ok) {
-        throw new Error('Ошибка при получении данных о товаре');
-      }
-      const product = await response.json();
-      displayProduct(product);
-      fetchRecommendedServices(); // Загружаем рекомендованные товары
-    } catch (error) {
-      console.error('Ошибка:', error);
-      document.getElementById('product-container').innerHTML = '<p>Не удалось загрузить данные о товаре.</p>';
-    }
-  }
-
-  function displayProduct(product) {
-    const container = document.getElementById('product-container');
-    container.innerHTML = `
-      <div class="product-card">
-        <div class="image-wrapper">
-          <img src="data:image/jpeg;base64,${product.ImageBase64}" alt="${product.Item_Name}">
+    <!-- Header -->
+    <header>
+        <div class="navbar">
+            <a href="index.html" class="logo">EuroBuld</a>
+            
+            <nav class="nav-links">
+                <a href="index.html">Главная</a>
+                <a href="services.html">Услуги</a>
+                <a href="AboutUs.html">О нас</a>
+                <a href="contact.html">Контакты</a>
+            </nav>
+            
+            <div class="auth-buttons" id="authButtons">
+                <a href="Authorization.html" class="btn btn-outline">Войти</a>
+                <a href="Registration.html" class="btn btn-primary">Регистрация</a>
+            </div>
+            
+            <div class="user-profile" id="userProfile">
+                <a href="personalacount.html" id="userEmail"></a>
+            </div>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
         </div>
-        <div class="info-wrapper">
-          <h2>${product.Item_Name}</h2>
-          <div class="price">${product.Price}</div>
-          <p>${product.Item_Description}</p>
-          <button class="buy-btn" onclick="buyService(${product.ID_Service})">Купить</button>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <a href="index.html" class="logo">EuroBuld</a>
+            <button class="close-menu-btn" id="closeMenuBtn">×</button>
         </div>
-      </div>
-    `;
+        
+        <nav class="mobile-nav-links">
+            <a href="index.html">Главная</a>
+            <a href="services.html">Услуги</a>
+            <a href="AboutUs.html">О нас</a>
+            <a href="contact.html">Контакты</a>
+        </nav>
+        
+        <div class="mobile-auth-buttons" id="mobileAuthButtons">
+            <a href="Authorization.html" class="btn btn-outline">Войти</a>
+            <a href="Registration.html" class="btn btn-primary">Регистрация</a>
+        </div>
+        
+        <div class="user-profile" id="mobileUserProfile" style="display: none;">
+            <a href="personalacount.html" id="mobileUserEmail"></a>
+        </div>
+    </div>
     
-    document.title = `${product.Item_Name}`;
-  }
+    <div class="overlay" id="overlay"></div>
 
-  async function buyService(serviceId) {
-  try {
-    // Проверяем авторизацию и получаем данные пользователя
-    const response = await fetch('/api/check_auth', {
-      credentials: 'include' // для передачи кук
-    });
-    const authData = await response.json();
-    
-    if (!authData.isAuth) {
-      alert('Пожалуйста, авторизуйтесь для оформления покупки.');
-      return;
-    }
+    <!-- Main Content -->
+    <div class="wrapper">
+        <div id="product-container" class="product-container"></div>
+        
+        <!-- Features Section -->
+        <div class="features">
+            <div class="feature">
+                <i class="fas fa-shield-alt"></i>
+                <div class="feature-text">
+                    <h3>Гарантия качества</h3>
+                    <p>Все работы выполняются по стандартам ГОСТ</p>
+                </div>
+            </div>
+            <div class="feature">
+                <i class="fas fa-calendar-check"></i>
+                <div class="feature-text">
+                    <h3>Соблюдение сроков</h3>
+                    <p>Строгое соблюдение оговоренных сроков</p>
+                </div>
+            </div>
+            <div class="feature">
+                <i class="fas fa-headset"></i>
+                <div class="feature-text">
+                    <h3>Поддержка 24/7</h3>
+                    <p>Круглосуточная поддержка клиентов</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    // Получаем id пользователя из данных авторизации
-    const userId = authData.userId;  // предполагается, что сервер возвращает id пользователя в ответе
+    <!-- Recommended Section -->
+    <div class="recommended-section">
+        <h2>Рекомендуемые услуги</h2>
+        <div class="recommended-container" id="recommended"></div>
+        <div class="swipe-buttons">
+            <button class="swipe-btn" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+            <button class="swipe-btn" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
 
-    if (!userId) {
-      alert('Ошибка: Не удалось получить данные пользователя.');
-      return;
-    }
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const overlay = document.getElementById('overlay');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        closeMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        overlay.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        // Check auth status
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const authCheck = await fetch('/api/check_auth', {
+                    credentials: 'include'
+                });
+                
+                if (authCheck.ok) {
+                    const authData = await authCheck.json();
+                    
+                    if (authData.isAuth) {
+                        // Show user email in desktop header
+                        document.getElementById('authButtons').style.display = 'none';
+                        document.getElementById('userProfile').style.display = 'flex';
+                        document.getElementById('userEmail').textContent = authData.email;
+                        
+                        // Show user email in mobile menu
+                        document.getElementById('mobileAuthButtons').style.display = 'none';
+                        document.getElementById('mobileUserProfile').style.display = 'block';
+                        document.getElementById('mobileUserEmail').textContent = authData.email;
+                    }
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            }
 
-    // Отправляем запрос на создание заказа с id_user и ID_Service
-    const orderResponse = await fetch('/api/customer_orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-  ID_Users: userId,  // Исправлено название параметра
-  ID_Service: serviceId,
-  Order_Date: new Date().toISOString().split('T')[0], // Добавить дату
-}),      credentials: 'include' // Важно для передачи кук
-    });
+            // Load product data
+            const productId = getQueryParam('id');
+            if (productId) {
+                fetchProductById(productId);
+            } else {
+                document.getElementById('product-container').innerHTML = '<p>Услуга не найдена.</p>';
+            }
+        });
 
-    if (orderResponse.ok) {
-      alert('Услуга успешно куплена!');
-    } else {
-      const error = await orderResponse.text();
-      alert(`Ошибка: ${error}`);
-    }
-  } catch (error) {
-    console.error('Ошибка при оформлении заказа:', error);
-    alert('Ошибка при соединении с сервером');
-  }
-}
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
 
+        async function fetchProductById(id) {
+            try {
+                const response = await fetch(`/api/service/${id}`);
+                if (!response.ok) {
+                    throw new Error('Ошибка при получении данных об услуге');
+                }
+                const product = await response.json();
+                displayProduct(product);
+                fetchRecommendedServices();
+            } catch (error) {
+                console.error('Ошибка:', error);
+                document.getElementById('product-container').innerHTML = '<p>Не удалось загрузить данные об услуге.</p>';
+            }
+        }
 
+        function displayProduct(product) {
+            const container = document.getElementById('product-container');
+            container.innerHTML = `
+                <div class="product-card">
+                    <div class="image-wrapper">
+                        <img src="data:image/jpeg;base64,${product.ImageBase64}" alt="${product.Item_Name}">
+                    </div>
+                    <div class="info-wrapper">
+                        <h2>${product.Item_Name}</h2>
+                        <div class="price">${product.Price} ₽</div>
+                        <p>${product.Item_Description || 'Описание услуги отсутствует.'}</p>
+                        <button class="buy-btn" onclick="buyService(${product.ID_Service})">
+                            <i class="fas fa-shopping-cart"></i> Купить
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.title = `${product.Item_Name} | EuroBuld`;
+        }
 
-  async function fetchRecommendedServices() {
-    try {
-      const response = await fetch('/api/service');
-      const services = await response.json();
-      displayRecommendedServices(services.slice(0, 5));
-    } catch (error) {
-      console.error('Ошибка при загрузке рекомендованных товаров:', error);
-    }
-  }
+        async function buyService(serviceId) {
+            try {
+                // Check auth
+                const response = await fetch('/api/check_auth', {
+                    credentials: 'include'
+                });
+                const authData = await response.json();
+                
+                if (!authData.isAuth) {
+                    if (confirm('Для оформления заказа необходимо авторизоваться. Перейти на страницу входа?')) {
+                        window.location.href = 'Authorization.html';
+                    }
+                    return;
+                }
 
-  function displayRecommendedServices(services) {
-    const container = document.getElementById('recommended');
-    container.innerHTML = '';
-    services.forEach(service => {
-      const card = document.createElement('div');
-      card.className = 'recommended-card';
-      card.innerHTML = `
-        <img src="data:image/jpeg;base64,${service.ImageBase64}" alt="${service.Item_Name}">
-        <h3>${service.Item_Name}</h3>
-        <div class="price">${service.Price}</div>
-        <button class="details-btn" onclick="openProduct(${service.ID_Service})">Подробнее</button>
-      `;
-      container.appendChild(card);
-    });
-  }
+                // Create order
+                const orderResponse = await fetch('/api/customer_orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        ID_Users: authData.userId,
+                        ID_Service: serviceId,
+                        Order_Date: new Date().toISOString().split('T')[0]
+                    }),
+                    credentials: 'include'
+                });
 
-  function openProduct(id) {
-    window.location.href = `product.html?id=${id}`;
-  }
+                if (orderResponse.ok) {
+                    alert('Услуга успешно добавлена в ваши заказы!');
+                } else {
+                    const error = await orderResponse.json();
+                    alert(`Ошибка: ${error.message || 'Не удалось оформить заказ'}`);
+                }
+            } catch (error) {
+                console.error('Ошибка при оформлении заказа:', error);
+                alert('Произошла ошибка при соединении с сервером');
+            }
+        }
 
-  let scrollAmount = 0;
-  const recommendedContainer = document.getElementById('recommended');
+        async function fetchRecommendedServices() {
+            try {
+                const response = await fetch('/api/service');
+                const services = await response.json();
+                displayRecommendedServices(services.slice(0, 5));
+            } catch (error) {
+                console.error('Ошибка при загрузке рекомендованных услуг:', error);
+            }
+        }
 
-  document.getElementById('prevBtn').addEventListener('click', () => {
-    scrollAmount -= 300;
-    if (scrollAmount < 0) scrollAmount = 0;
-    recommendedContainer.scrollTo({
-      left: scrollAmount,
-      behavior: 'smooth'
-    });
-  });
+        function displayRecommendedServices(services) {
+            const container = document.getElementById('recommended');
+            container.innerHTML = '';
+            services.forEach(service => {
+                const card = document.createElement('div');
+                card.className = 'recommended-card';
+                card.innerHTML = `
+                    <img src="data:image/jpeg;base64,${service.ImageBase64}" alt="${service.Item_Name}">
+                    <h3>${service.Item_Name}</h3>
+                    <div class="price">${service.Price} ₽</div>
+                    <button class="details-btn" onclick="openProduct(${service.ID_Service})">Подробнее</button>
+                `;
+                container.appendChild(card);
+            });
+        }
 
-  document.getElementById('nextBtn').addEventListener('click', () => {
-    scrollAmount += 300;
-    recommendedContainer.scrollTo({
-      left: scrollAmount,
-      behavior: 'smooth'
-    });
-  });
+        function openProduct(id) {
+            window.location.href = `product.html?id=${id}`;
+        }
 
-  const productId = getQueryParam('id');
-  if (productId) {
-    fetchProductById(productId);
-  } else {
-    document.getElementById('product-container').innerHTML = '<p>Товар не найден.</p>';
-  }
-</script>
+        // Carousel navigation
+        let scrollAmount = 0;
+        const recommendedContainer = document.getElementById('recommended');
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            scrollAmount -= 300;
+            if (scrollAmount < 0) scrollAmount = 0;
+            recommendedContainer.scrollTo({
+                left: scrollAmount,
+                behavior: 'smooth'
+            });
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            scrollAmount += 300;
+            recommendedContainer.scrollTo({
+                left: scrollAmount,
+                behavior: 'smooth'
+            });
+        });
+    </script>
 </body>
 </html>

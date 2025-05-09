@@ -1456,24 +1456,6 @@
       border-color: red;
     }
 
-    button[type="submittt"] {
-      background-color: #430113;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      font-weight: bold;
-      height: 50px;
-      width: 250px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    button[type="submittt"]:hover {
-      background-color: #5b1418;
-    }
-
     .password-wrapper {
       display: flex;
       align-items: center;

@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Админ-панель | Таблицы</title>
+  <title>EuroBuld - Менеджер-панель | Таблицы</title>
   <link rel="stylesheet" href="css/styele.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
@@ -10,83 +10,678 @@
       box-sizing: border-box;
     }
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       display: flex;
       height: 100vh;
-      background-color: #f9f9f9;
-    }
-    #editBtn {
-      margin-left: 10px;
+      background-color: #f5f7fa;
+      color: #333;
     }
     
-
-#printContent {
-  display: none;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
-
-.order-header {
-  text-align: center;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #333;
-  padding-bottom: 10px;
-}
-
-.order-details {
-  margin-bottom: 20px;
-}
-
-.order-section {
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.order-label {
-  font-weight: bold;
-  margin-right: 10px;
-}
-
-.signature-block {
-  margin-top: 50px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.signature-line {
-  border-top: 1px solid #333;
-  width: 200px;
-  text-align: center;
-  padding-top: 5px;
-}
+    /* Обновленный сайдбар */
+    .sidebar {
+      width: 280px;
+      background: linear-gradient(135deg, #430113 0%, #6a0f1d 100%);
+      padding: 20px 0;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 10;
+    }
+    
+    .sidebar-header {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .sidebar-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sidebar-header h3 i {
+      color: #ff9e9e;
+    }
+    
+    .sidebar div {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      padding: 12px 25px;
+      transition: all 0.3s ease;
+      border-radius: 0 30px 30px 0;
+      margin: 5px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sidebar div::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0;
+      background-color: rgba(255,255,255,0.1);
+      transition: width 0.3s ease;
+    }
+    
+    .sidebar div:hover::before {
+      width: 100%;
+    }
+    
+    .sidebar div i {
+      font-size: 16px;
+      min-width: 20px;
+      text-align: center;
+      color: #ffb8b8;
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar div:hover {
+      color: #fff;
+    }
+    
+    .sidebar div:hover i {
+      transform: scale(1.2);
+      color: #fff;
+    }
+    
+    .sidebar div.active {
+      background-color: rgba(255,255,255,0.15);
+      color: #fff;
+      font-weight: 500;
+    }
+    
+    .sidebar div.active i {
+      color: #fff;
+    }
+    
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      text-align: center;
+    }
+    
+    /* Основная область */
+    .main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .topbar {
+      background-color: white;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      z-index: 5;
+    }
+    
+    .topbar .profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    
+    .profile-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #430113;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    
+    .profile-name {
+      font-weight: 500;
+    }
+    
+    .logout-btn {
+      background-color: #430113;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .logout-btn:hover {
+      background-color: #5a0a1f;
+    }
+    
+    .table-wrapper {
+      flex-grow: 1;
+      padding: 25px;
+      overflow: auto;
+      background-color: #f5f7fa;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    th, td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    th {
+      background-color: #f9f9f9;
+      font-weight: 600;
+      color: #555;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    
+    tr[data-selected="true"] {
+      background-color: #fff0f0;
+    }
+    
+    /* Кнопки действий */
+    .actions {
+      padding: 15px 25px;
+      background-color: white;
+      display: flex;
+      justify-content: flex-end;
+      gap: 15px;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .actions button {
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .actions button:first-child {
+      background-color: #430113;
+      color: white;
+    }
+    
+    .actions button:nth-child(2) {
+      background-color: #2c5e1a;
+      color: white;
+    }
+    
+    .actions button:last-child {
+      background-color: #a10e2b;
+      color: white;
+    }
+    
+    .actions button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+    
+    /* Модальное окно */
+    #modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    #modalContent {
+      background: white;
+      border-radius: 12px;
+      width: 500px;
+      max-width: 95%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    #modalTitle {
+      padding: 20px;
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #430113;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    #modalForm {
+      padding: 20px;
+    }
+    
+    .modal-field {
+      margin-bottom: 20px;
+    }
+    
+    .modal-field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    .modal-field input,
+    .modal-field select,
+    .modal-field textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border 0.3s;
+    }
+    
+    .modal-field input:focus,
+    .modal-field select:focus,
+    .modal-field textarea:focus {
+      border-color: #430113;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(67, 1, 19, 0.1);
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 15px 20px;
+      border-top: 1px solid #f0f0f0;
+    }
+    
+    .modal-actions button {
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .modal-actions .save {
+      background-color: #430113;
+      color: white;
+      border: none;
+    }
+    
+    .modal-actions .cancel {
+      background-color: #f0f0f0;
+      color: #555;
+      border: none;
+    }
+    
+    .modal-actions .save:hover {
+      background-color: #5a0a1f;
+    }
+    
+    .modal-actions .cancel:hover {
+      background-color: #e0e0e0;
+    }
+    
+    /* Счетчик символов */
+    .char-counter {
+      font-size: 12px;
+      color: #777;
+      text-align: right;
+      margin-top: 5px;
+    }
+    
+    .char-counter.limit-reached {
+      color: #e74c3c;
+    }
+    
+    /* Уведомление */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 5px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1001;
+      transform: translateX(150%);
+      transition: transform 0.3s ease;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+    
+    .notification.error {
+      background-color: #f44336;
+    }
+    
+    .notification.warning {
+      background-color: #ff9800;
+    }
+    
+    /* Модальное окно дня рождения */
+    #birthdayModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    #birthdayContent {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      width: 400px;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #birthdayContent h2 {
+      color: #430113;
+      margin-bottom: 20px;
+    }
+    
+    #birthdayContent p {
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+    
+    #birthdayContent button {
+      background-color: #430113;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    #birthdayContent button:hover {
+      background-color: #5a0a1f;
+      transform: translateY(-2px);
+    }
+    
+    .balloon {
+      position: absolute;
+      width: 30px;
+      height: 40px;
+      border-radius: 50%;
+      animation: float 5s infinite ease-in-out;
+      z-index: -1;
+    }
+    
+    /* Темная тема */
+    .dark-mode {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+    }
+    
+    .dark-mode .sidebar {
+      background: linear-gradient(135deg, #2a0a1a 0%, #4a0a1a 100%);
+    }
+    
+    .dark-mode .topbar,
+    .dark-mode .table-wrapper,
+    .dark-mode .actions,
+    .dark-mode #modalContent,
+    .dark-mode #birthdayContent {
+      background-color: #252525;
+      color: #e0e0e0;
+    }
+    
+    .dark-mode table,
+    .dark-mode th,
+    .dark-mode td {
+      background-color: #2d2d2d;
+      color: #e0e0e0;
+      border-color: #3d3d3d;
+    }
+    
+    .dark-mode th {
+      background-color: #333;
+    }
+    
+    .dark-mode tr:hover {
+      background-color: #3a3a3a;
+    }
+    
+    .dark-mode tr[data-selected="true"] {
+      background-color: #3a1a1a;
+    }
+    
+    .dark-mode .modal-field input,
+    .dark-mode .modal-field select,
+    .dark-mode .modal-field textarea {
+      background-color: #333;
+      border-color: #444;
+      color: #e0e0e0;
+    }
+    
+    .dark-mode .modal-field input:focus,
+    .dark-mode .modal-field select:focus,
+    .dark-mode .modal-field textarea:focus {
+      border-color: #8a2a2a;
+      box-shadow: 0 0 0 3px rgba(138, 42, 42, 0.3);
+    }
+    
+    /* Анимации */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(5deg); }
+    }
+    
+    /* Кастомный скроллбар */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 992px) {
+      .sidebar {
+        width: 70px;
+        overflow: hidden;
+      }
+      
+      .sidebar div span {
+        display: none;
+      }
+      
+      .sidebar-header h3 span {
+        display: none;
+      }
+      
+      .sidebar div {
+        justify-content: center;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        margin: 5px auto;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+      }
+      
+      .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 10px;
+      }
+      
+      .sidebar-header {
+        display: none;
+      }
+      
+      .sidebar div {
+        width: auto;
+        height: auto;
+        padding: 8px 12px;
+        border-radius: 20px;
+        margin: 5px;
+      }
+      
+      .sidebar-footer {
+        display: none;
+      }
+      
+      .table-wrapper {
+        padding: 15px;
+      }
+      
+      th, td {
+        padding: 10px;
+        font-size: 14px;
+      }
+      
+      .actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .actions button {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="sidebar">
-    <div onclick="loadTable('customer_orders')"><i class="fas fa-box"></i> Заказы</div>
-    <div onclick="loadTable('processed_customer_orders')"><i class="fas fa-check-circle"></i> Мои обработанные</div>
+    <div class="sidebar-header">
+      <h3><i class="fas fa-cog"></i> <span>Менеджер-панель</span></h3>
+    </div>
+    
+    <div onclick="loadTable('customer_orders')" class="active"><i class="fas fa-box"></i> <span>Заказы</span></div>
+    <div onclick="loadTable('processed_customer_orders')"><i class="fas fa-check-circle"></i> <span>Мои обработанные</span></div>
+    
+    <div class="sidebar-footer">
+      <span>EUROBULD © 2024</span>
+    </div>
   </div>
+  
   <div class="main">
     <div class="topbar">
-      <a href="index.html"><div class="profile">Выйти</div></a>
+      <div class="profile">
+        <div class="profile-avatar">S</div>
+        <div class="profile-name">Добро пожаловать!</div>
+      </div>
+      <button class="logout-btn" onclick="location.href='index.html'">
+        <i class="fas fa-sign-out-alt"></i> Выйти
+      </button>
     </div>
+    
     <div class="table-wrapper" id="tableContainer"></div>
+    
     <div class="actions">
-      <button onclick="openModal('add')">Взять заказ</button>
-      <button id="editBtn" onclick="openModal('edit')" disabled>Редактировать заказ</button>
-      <button id="printBtn" onclick="printSelectedOrder()" disabled>Печать заказа</button>
+      <button onclick="openModal('add')">
+        <i class="fas fa-plus"></i> Взять заказ
+      </button>
+      <button id="editBtn" onclick="openModal('edit')" disabled>
+        <i class="fas fa-edit"></i> Редактировать
+      </button>
+      <button id="printBtn" onclick="printSelectedOrder()" disabled>
+        <i class="fas fa-print"></i> Печать
+      </button>
     </div>
   </div>
+
+  <!-- Модальное окно дня рождения -->
   <div id="birthdayModal">
     <div id="birthdayContent">
       <h2>🎉 С Днем Рождения! 🎉</h2>
       <p>Дорогой сотрудник, от всей души поздравляем вас с днём рождения! Желаем успехов, здоровья и счастья!</p>
       <button onclick="closeBirthdayModal()">Спасибо!</button>
     </div>
-    
   </div>
+
+  <!-- Модальное окно -->
   <div id="modal">
     <div id="modalContent">
       <h3 id="modalTitle">Добавить запись</h3>
@@ -99,6 +694,12 @@
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- Уведомление -->
+  <div class="notification" id="notification">
+    <i class="fas fa-check-circle"></i>
+    <span id="notificationText">Успешно сохранено!</span>
   </div>
 
   <script>
@@ -372,17 +973,6 @@
       }
     });
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      await getCurrentStaffId();
-      if (currentStaffId) {
-        loadTable('customer_orders');
-        // Проверяем день рождения
-        checkBirthday();
-      } else {
-        document.getElementById('tableContainer').innerHTML = 'Доступ запрещен';
-      }
-    });
-
     function validateDates() {
       const dateStart = document.getElementById('dateStart').value;
       const dateEnding = document.getElementById('dateEnding').value;
@@ -446,6 +1036,16 @@
         console.error('Ошибка при проверке дня рождения:', error);
       }
     }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await getCurrentStaffId();
+      if (currentStaffId) {
+        loadTable('customer_orders');
+        checkBirthday();
+      } else {
+        document.getElementById('tableContainer').innerHTML = 'Доступ запрещен';
+      }
+    });
   </script>
 </body>
 </html>

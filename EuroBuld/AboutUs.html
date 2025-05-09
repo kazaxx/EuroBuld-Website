@@ -1,194 +1,691 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>О нас</title>
-  <link rel="stylesheet" href="css/styele.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EuroBuld - О нас</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #430113;
+            --secondary-color: #560019;
+            --text-dark: #131416;
+            --text-light: #777e90;
+            --bg-light: #f4f7fc;
+            --white: #ffffff;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding-top: 90px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 18px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-links a:hover, 
+        .nav-links a.active {
+            color: var(--primary-color);
+        }
+
+        .nav-links a.active:after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .auth-buttons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-outline {
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            background: transparent;
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .user-profile {
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-profile a {
+            color: var(--primary-color);
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        /* About Section Styles */
+        .about-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 50px 30px;
+        }
+
+        .about-section h1 {
+            text-align: center;
+            margin-bottom: 50px;
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .about-content {
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+        }
+
+        .about-block {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .about-block img {
+            width: 50%;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            object-fit: cover;
+            height: 400px;
+        }
+
+        .about-block-text {
+            width: 50%;
+        }
+
+        .about-block h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .about-block p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+
+        .about-block-reverse {
+            flex-direction: row-reverse;
+        }
+
+        /* Team Section Styles */
+        .team-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 30px 60px;
+            text-align: center;
+        }
+
+        .team-section h2 {
+            font-size: 28px;
+            margin-bottom: 40px;
+            color: var(--primary-color);
+        }
+
+        .team-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .team-member {
+            width: 250px;
+            background: var(--white);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+        }
+
+        .team-member:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .team-member img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 3px solid var(--primary-color);
+        }
+
+        .team-member h3 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: var(--text-dark);
+        }
+
+        .team-member p {
+            font-size: 16px;
+            color: var(--text-light);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 80%;
+            max-width: 300px;
+            height: 100vh;
+            background-color: var(--white);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1100;
+            transition: var(--transition);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mobile-menu.active {
+            left: 0;
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .close-menu-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mobile-nav-links a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 18px;
+            padding: 10px 0;
+        }
+
+        .desktop-download-section {
+            background-color: var(--bg-light);
+            padding: 60px 30px;
+            text-align: center;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .desktop-download-section h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .desktop-download-section p {
+            font-size: 18px;
+            max-width: 700px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+
+        .platform-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .platform-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        .platform-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .platform-btn i {
+            font-size: 24px;
+        }
+
+        .windows-btn i { color: #0078D7; }
+        .mac-btn i { color: #999999; }
+        .linux-btn i { color: #000000; }
+
+        .file-info {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-top: 20px;
+        }
+
+        .mobile-auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: auto;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1050;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .about-block img {
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links,
+            .auth-buttons,
+            .user-profile {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .desktop-download-section {
+                padding: 40px 20px;
+            }
+            
+            .desktop-download-section h2 {
+                font-size: 28px;
+            }
+            
+            .platform-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .platform-btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+
+            .about-section {
+                padding: 30px 20px;
+            }
+
+            .about-section h1 {
+                font-size: 28px;
+                margin-bottom: 30px;
+            }
+
+            .about-block {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .about-block img {
+                width: 100%;
+                height: auto;
+                order: -1;
+            }
+
+            .about-block-text {
+                width: 100%;
+            }
+
+            .about-block h2 {
+                font-size: 22px;
+            }
+
+            .about-block p {
+                font-size: 16px;
+            }
+
+            .team-section {
+                padding: 0 20px 40px;
+            }
+
+            .team-section h2 {
+                font-size: 24px;
+            }
+
+            .team-member {
+                width: 45%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 15px 20px;
+            }
+
+            .about-section h1 {
+                font-size: 24px;
+            }
+
+            .about-block h2 {
+                font-size: 20px;
+            }
+
+            .team-section h2 {
+                font-size: 22px;
+                margin-bottom: 30px;
+            }
+
+            .team-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .team-member {
+                width: 80%;
+            }
+        }
+    </style>
 </head>
-<style>
-  /* Мобильные стили для AboutUs.html */
-@media only screen and (max-width: 768px) {
-  .navbar {
-    padding: 20px 15px;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .left-menu {
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .nav-link, .nav-link-2 {
-    font-size: 18px;
-  }
-
-  .poloska {
-    width: 100%;
-    height: 5px;
-  }
-
-  .about-section {
-    padding: 20px 15px;
-  }
-
-  .about-section h1 {
-    font-size: 28px;
-    margin-bottom: 20px;
-  }
-
-  .about-block {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .about-block img {
-    max-width: 100%;
-    order: -1; /* Картинка будет сверху */
-  }
-
-  .about-block-text {
-    max-width: 100%;
-  }
-
-  .about-block h2 {
-    font-size: 20px;
-  }
-
-  .about-block p {
-    font-size: 16px;
-    line-height: 1.5;
-  }
-
-  .team-section h2 {
-    font-size: 24px;
-  }
-
-  .team-container {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .team-member {
-    width: 80%;
-    margin-bottom: 20px;
-  }
-
-  .team-member img {
-    width: 150px;
-    height: 150px;
-  }
-
-  .team-member h3 {
-    font-size: 18px;
-  }
-
-  .team-member p {
-    font-size: 16px;
-  }
-}
-
-/* Дополнительные стили для очень маленьких экранов */
-@media only screen and (max-width: 480px) {
-  .nav-link, .nav-link-2 {
-    font-size: 16px;
-  }
-
-  .about-section h1 {
-    font-size: 24px;
-  }
-
-  .about-block h2 {
-    font-size: 18px;
-  }
-
-  .about-block p {
-    font-size: 14px;
-  }
-
-  .team-section h2 {
-    font-size: 20px;
-  }
-
-  .team-member {
-    width: 90%;
-  }
-
-  .team-member img {
-    width: 120px;
-    height: 120px;
-  }
-}
-</style>
 <body>
-  <header class="navbar">
-    <div class="left-wrapper">
-      <div class="left-menu">
-        <a href="index.html" class="nav-link">Главная</a>
-        <a href="service.html" class="nav-link">Услуги</a>
-        <a href="" class="nav-link-2">О нас</a>
-        <a href="contact.html" class="nav-link">Контакты</a>
-      </div>
-      <img src="images/Screenshot_2.png" class="poloska" width="440" height="7">
-    </div>
-  </header>
-
-  <div class="about-section">
-    <h1>О нашей компании</h1>
-
-    <div class="about-content">
-      <div class="about-block">
-        <img src="images/AboutUs-1.jpeg" alt="Фото 1">
-        <div class="about-block-text">
-          <h2>Наша История</h2>
-          <p>Компания EuroBuld была основана с целью создать надежного партнера в сфере строительства, ориентированного на качество и современные технологии. С самого начала своей деятельности EuroBuld стремится воплощать амбициозные проекты, которые улучшают городской облик и создают комфортные условия для жизни и работы.</p>
+    <!-- Header -->
+    <header>
+        <div class="navbar">
+            <a href="index.html" class="logo">EuroBuld</a>
+            
+            <nav class="nav-links">
+                <a href="index.html">Главная</a>
+                <a href="service.html">Услуги</a>
+                <a href="AboutUs.html" class="active">О нас</a>
+                <a href="contact.html">Контакты</a>
+            </nav>
+            
+            <div class="auth-buttons" id="authButtons">
+                <a href="Authorization.html" class="btn btn-outline">Войти</a>
+                <a href="Registration.html" class="btn btn-primary">Регистрация</a>
+            </div>
+            
+            <div class="user-profile" id="userProfile">
+                <a href="personalacount.html" id="userEmail"></a>
+            </div>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
         </div>
-      </div>
+    </header>
 
-      <div class="about-block about-block-reverse">
-        <img src="images/AboutUs-2.jpg" alt="Фото 2">
-        <div class="about-block-text">
-          <h2>Наши Услуги</h2>
-          <p>EuroBuld предоставление высококачественных и инновационных строительных услуг, соответствующих современным стандартам и требованиям клиентов. Мы стремимся создавать надежные, безопасные и функциональные объекты, обеспечивая комплексный подход в проектировании, строительстве и обслуживании. Наша миссия заключается в улучшении городской инфраструктуры и жилых пространств.</p>
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <a href="index.html" class="logo">EuroBuld</a>
+            <button class="close-menu-btn" id="closeMenuBtn">×</button>
         </div>
-      </div>
-
-      <div class="about-block">
-        <img src="images/AboutUs-3.jpg" alt="Фото 3">
-        <div class="about-block-text">
-          <h2>Наши Ценности</h2>
-          <p>Наши основные ценности — это качество, инновации и забота о клиенте. Мы продолжаем развиваться и постоянно ищем новые пути для улучшения нашей работы и продуктов.</p>
+        
+        <nav class="mobile-nav-links">
+            <a href="index.html">Главная</a>
+            <a href="service.html">Услуги</a>
+            <a href="AboutUs.html" class="active">О нас</a>
+            <a href="contact.html">Контакты</a>
+        </nav>
+        
+        <div class="mobile-auth-buttons" id="mobileAuthButtons">
+            <a href="Authorization.html" class="btn btn-outline">Войти</a>
+            <a href="Registration.html" class="btn btn-primary">Регистрация</a>
         </div>
-      </div>
+        
+        <div class="user-profile" id="mobileUserProfile" style="display: none;">
+            <a href="personalacount.html" id="mobileUserEmail"></a>
+        </div>
     </div>
-  </div>
+    
+    <div class="overlay" id="overlay"></div>
 
-  <div class="team-section">
-    <h2>Наши сотрудники</h2>
-    <div class="team-container">
-      <div class="team-member">
-        <img src="images/GenDirector.jpg" alt="Сотрудник 1">
-        <h3>Прохоров Иван</h3>
-        <p>Генеральный директор</p>
-      </div>
-      <div class="team-member">
-        <img src="https://www.bancodelpacifico.com/BancoPacifico/media/Personas/servicios/servicios-NegociacionDivisas.jpg?ext=.jpg&width=450&height=356" alt="Сотрудник 2">
-        <h3>Смирнов Алексей</h3>
-        <p>Директор по маркетингу</p>
-      </div>
-      <div class="team-member">
-        <img src="https://files.worldsamo.com/__filtered__/article_image_3c2088f0-d5b1-45e0-8361-f2982c1cea60__large__.jpg" alt="Сотрудник 3">
-        <h3>Шувалов Артём</h3>
-        <p>Руководитель проектов</p>
-      </div>
-      <div class="team-member">
-        <img src="https://evroportal.ru/wp-content/uploads/2017/07/ofisnyy-rabotnik.jpg" alt="Сотрудник 4">
-        <h3>Никита Погор</h3>
-        <p>Финансовый директор</p>
-      </div>
+    <!-- Main Content -->
+    <div class="about-section">
+        <h1>О нашей компании</h1>
+
+        <div class="about-content">
+            <div class="about-block">
+                <img src="images/AboutUs-1.jpeg" alt="Наша история">
+                <div class="about-block-text">
+                    <h2>Наша История</h2>
+                    <p>Компания EuroBuld была основана с целью создать надежного партнера в сфере строительства, ориентированного на качество и современные технологии. С самого начала своей деятельности EuroBuld стремится воплощать амбициозные проекты, которые улучшают городской облик и создают комфортные условия для жизни и работы.</p>
+                </div>
+            </div>
+
+            <div class="about-block about-block-reverse">
+                <img src="images/AboutUs-2.jpg" alt="Наши услуги">
+                <div class="about-block-text">
+                    <h2>Наши Услуги</h2>
+                    <p>EuroBuld предоставление высококачественных и инновационных строительных услуг, соответствующих современным стандартам и требованиям клиентов. Мы стремимся создавать надежные, безопасные и функциональные объекты, обеспечивая комплексный подход в проектировании, строительстве и обслуживании. Наша миссия заключается в улучшении городской инфраструктуры и жилых пространств.</p>
+                </div>
+            </div>
+
+            <div class="about-block">
+                <img src="images/AboutUs-3.jpg" alt="Наши ценности">
+                <div class="about-block-text">
+                    <h2>Наши Ценности</h2>
+                    <p>Наши основные ценности — это качество, инновации и забота о клиенте. Мы продолжаем развиваться и постоянно ищем новые пути для улучшения нашей работы и продуктов.</p>
+                </div>
+            </div>
+        
+            <!-- Блок для скачивания десктопного приложения -->
+            <div class="desktop-download-section">
+                <h2>Скачайте наше приложение для компьютера</h2>
+                <p>Полная функциональность EuroBuld всегда под рукой. Установите наше приложение для вашей операционной системы.</p>
+                
+                <div class="platform-buttons">
+                    <a href="/downloads/EuroBuld-Setup.exe" class="platform-btn windows-btn">
+                        <i class="fab fa-windows"></i>
+                        <span>Скачать для Windows</span>
+                    </a>
+                </div>
+                
+                <div class="file-info">
+                    <p>Версия 2.1.4 | Размер: ~120MB | Поддержка: Windows 10+</p>
+                </div>
+            </div>
+
+        </div>
     </div>
-  </div>
+
+    <div class="team-section">
+        <h2>Наши сотрудники</h2>
+        <div class="team-container">
+            <div class="team-member">
+                <img src="images/GenDirector.jpg" alt="Прохоров Иван">
+                <h3>Прохоров Иван</h3>
+                <p>Генеральный директор</p>
+            </div>
+            <div class="team-member">
+                <img src="https://www.bancodelpacifico.com/BancoPacifico/media/Personas/servicios/servicios-NegociacionDivisas.jpg?ext=.jpg&width=450&height=356" alt="Смирнов Алексей">
+                <h3>Смирнов Алексей</h3>
+                <p>Директор по маркетингу</p>
+            </div>
+            <div class="team-member">
+                <img src="https://files.worldsamo.com/__filtered__/article_image_3c2088f0-d5b1-45e0-8361-f2982c1cea60__large__.jpg" alt="Шувалов Артём">
+                <h3>Шувалов Артём</h3>
+                <p>Руководитель проектов</p>
+            </div>
+            <div class="team-member">
+                <img src="https://evroportal.ru/wp-content/uploads/2017/07/ofisnyy-rabotnik.jpg" alt="Никита Погор">
+                <h3>Никита Погор</h3>
+                <p>Финансовый директор</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const closeMenuBtn = document.getElementById('closeMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('overlay');
+            
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.add('active');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+            
+            closeMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+            
+            overlay.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+            
+            // Check auth status
+            try {
+                const authCheck = await fetch('/api/check_auth', {
+                    credentials: 'include'
+                });
+                
+                if (authCheck.ok) {
+                    const authData = await authCheck.json();
+                    
+                    if (authData.isAuth) {
+                        // Show user email in desktop header
+                        document.getElementById('authButtons').style.display = 'none';
+                        document.getElementById('userProfile').style.display = 'flex';
+                        document.getElementById('userEmail').textContent = authData.email;
+                        
+                        // Show user email in mobile menu
+                        document.getElementById('mobileAuthButtons').style.display = 'none';
+                        document.getElementById('mobileUserProfile').style.display = 'block';
+                        document.getElementById('mobileUserEmail').textContent = authData.email;
+                    }
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            }
+        });
+    </script>
 </body>
 </html>
