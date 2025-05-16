@@ -1177,7 +1177,6 @@
       }
     }
     
-    // Загрузка последних заказов
     async function loadRecentOrders() {
       const count = document.getElementById('recentOrdersCount').value;
       
@@ -1206,14 +1205,12 @@
       }
     }
     
-    // Класс для статуса заказа
     function getStatusClass(status) {
       if (status.includes('Завершен') || status.includes('Выполнен')) return 'badge-success';
       if (status.includes('В работе') || status.includes('Обработка')) return 'badge-warning';
       return 'badge-danger';
     }
     
-    // Переключение между вкладками
     function switchTab(tabId) {
       document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1222,7 +1219,6 @@
       document.getElementById(tabId).classList.add('active');
     }
     
-    // Экспорт отчетов в PDF
     function exportGeneralStats() {
       const doc = new jsPDF();
       const period = document.getElementById('timePeriod').value;
@@ -1235,15 +1231,12 @@
         'all': 'за все время'
       }[period] || '';
       
-      // Заголовок
       doc.setFontSize(20);
       doc.text('Общая статистика ' + periodText, 105, 20, { align: 'center' });
       
-      // Дата генерации
       doc.setFontSize(10);
       doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
       
-      // Основные показатели
       doc.setFontSize(14);
       doc.text('Основные показатели:', 14, 45);
       

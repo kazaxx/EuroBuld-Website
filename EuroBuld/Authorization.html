@@ -1,127 +1,319 @@
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="css/styele.css">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-        <title>Авторизация</title>
-    </head>
-    <body>
-        <div class="box"><div class="grad-background"></div></div>
-        <div class="falling-icons">
-            <i class="fas fa-hammer"></i>
-            <i class="fas fa-wrench"></i>
-            <i class="fas fa-screwdriver"></i>
-            <i class="fas fa-tools"></i>
-            <i class="fas fa-hammer"></i>
-            <i class="fas fa-wrench"></i>
-            <i class="fas fa-screwdriver"></i>
-            <i class="fas fa-tools"></i>
-            <i class="fas fa-drill"></i>
-            <i class="fas fa-level-up-alt"></i>
-            <i class="fas fa-paint-roller"></i>
-            <i class="fas fa-cogs"></i>
-            <i class="fas fa-gear"></i>
-            <i class="fas fa-hammer"></i>
-            <i class="fas fa-bolt"></i>
-            <i class="fas fa-lightbulb"></i>
-            <i class="fas fa-ruler"></i>
-          </div>
-        <div class="desktop-auth"><img class="preview" src="images/fon1.jpg" /></div>
-        <div class="frame22">
-            <div class="foto"><a href="index.html"><img src="images/Logo2.png" width="400" height="300"></a></div>
-            <div class="div22">
-                <div class="heading"><div class="title">Войдите в аккаунт аккаунт</div></div>
-                <form id="registerForm">
-                    <div class="input-large">
-                        <div class="input">
-                            <div class="container">
-                                <div class="control">
-                                    <input type="email" id="email" class="input-field" placeholder="Адрес электронной почты" required />
-                                </div>
-                            </div>
-                        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <title>EuroBuld - Авторизация</title>
+    <style>
+        /* Основные стили */
+        @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap");
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(270deg, #200122, #6f0000, #1a002a, #2b002b, #420000, #200122);
+            background-size: 800% 800%;
+            animation: gradientAnimation 20s ease infinite;
+            color: #fff;
+        }
+        
+        /* Анимации */
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Контейнеры */
+        .auth-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .auth-image {
+            flex: 1;
+            background: url('images/fon1.jpg') no-repeat center center;
+            background-size: cover;
+            position: relative;
+            z-index: 1;
+            clip-path: polygon(0 0, 100% 0, 85% 100%, 0% 100%);
+        }
+        
+        .auth-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(67, 1, 19, 0.3);
+            z-index: 2;
+        }
+        
+        .auth-form-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            z-index: 2;
+        }
+        
+        .auth-form-box {
+            background: rgba(219, 204, 207, 0.95);
+            padding: 3rem;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        /* Логотип */
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .auth-logo .logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            color: #430113;
+            text-decoration: none;
+            font-family: 'DM Sans', sans-serif;
+        }
+        
+        /* Заголовок */
+        .auth-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #430113;
+            font-weight: 700;
+            font-size: 1.8rem;
+            position: relative;
+        }
+        
+        .auth-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: #430113;
+            margin: 0.5rem auto 0;
+            border-radius: 2px;
+        }
+        
+        /* Форма */
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .form-group {
+            position: relative;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 1rem 3.5rem 1rem 1.5rem; /* Увеличено правое padding для иконок */
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            color: #430113;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            box-shadow: 0 4px 15px rgba(67, 1, 19, 0.2);
+            background: #fff;
+        }
+        
+        .form-input::placeholder {
+            color: #a18a8f;
+        }
+        
+        .form-icon {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #430113;
+            opacity: 0.7;
+        }
+        
+        /* Стили для кнопки показа пароля */
+        .toggle-password {
+            position: absolute;
+            right: 3rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #430113;
+            cursor: pointer;
+            opacity: 0.7;
+            z-index: 3;
+        }
+        
+        /* Кнопка */
+        .auth-button {
+            background: #430113;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(67, 1, 19, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 1rem;
+        }
+        
+        /* Ссылки */
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #430113;
+            font-size: 0.9rem;
+        }
+        
+        .auth-link {
+            color: #430113;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        /* Падающие иконки */
+        .falling-icons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .falling-icons i {
+            position: absolute;
+            top: -50px;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.8);
+            animation: fall linear infinite;
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+            opacity: 0.7;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 992px) {
+            .auth-container {
+                flex-direction: column;
+            }
+            
+            .auth-image {
+                display: none;
+            }
+            
+            .auth-form-container {
+                padding: 1rem;
+            }
+            
+            .auth-form-box {
+                padding: 2rem;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Левая часть с изображением -->
+        <div class="auth-image"></div>
+        
+        <!-- Правая часть с формой -->
+        <div class="auth-form-container">
+            <div class="auth-form-box">
+                <div class="auth-logo">
+                    <a href="index.html" class="logo-text">EuroBuld</a>
+                </div>
+                
+                <h1 class="auth-title">Войдите в аккаунт</h1>
+                
+                <form id="registerForm" class="auth-form">
+                    <div class="form-group">
+                        <input type="email" id="email" class="form-input" placeholder="Адрес электронной почты" required>
+                        <i class="fas fa-envelope form-icon"></i>
                     </div>
-                    <div class="input-large">
-                        <div class="input">
-                            <div class="container">
-                                <div class="control">
-                                    <input type="password" id="password" class="input-field" placeholder="Пароль" required />
-                                </div>
-                            </div>
-                        </div>
+                    
+                    <div class="form-group">
+                        <input type="password" id="password" class="form-input" placeholder="Пароль" required>
+                        <i class="fas fa-lock form-icon"></i>
+                        <i class="fas fa-eye toggle-password" id="togglePassword"></i>
                     </div>
-                    <button type="submit" class="button"><div class="label">Войти</div></button>
+                    
+                    <button type="submit" class="auth-button">Войти</button>
                 </form>
-                <div class="LABEL-wrapper">
-                    <p class="LABEL">
-                        <span class="text-wrapper">Еще нет аккаунта?</span>
-                        <span class="span">&nbsp;</span>
-                        <a href="Registration.html"><span class="text-wrapper-4">Зарегистрироваться</span></a>
-                    </p>
+                
+                <div class="auth-links">
+                    Еще нет аккаунта? <a href="Registration.html" class="auth-link">Зарегистрироваться</a>
                 </div>
             </div>
         </div>
-        <script>
-            document.getElementById('registerForm').addEventListener('submit', async function(event) {
-                event.preventDefault();
+    </div>
+    
+    <script>
+        // Функция для переключения видимости пароля
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
         
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
+        togglePassword.addEventListener('click', function() {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            this.classList.toggle('fa-eye-slash');
+        });
         
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                if (response.ok) {
-                    const role = await response.text();
-        
-                    if (role === 'Admin') {
-                        window.location.href = 'Аdmin_dashboard.html'; 
-                    } else if (role === 'Manager') {
-                        window.location.href = 'manager_dashboard.html'; 
-                    } else {
-                        window.location.href = 'personalacount.html'; 
-                    }
-                } else {
-                    const errorMessage = await response.text();
-                    alert('Ошибка авторизации: ' + errorMessage); 
-                }
-            });
-            ddocument.addEventListener('DOMContentLoaded', async function() {
- 
-            const authCheck = await fetch('/api/check_auth', {
-                credentials: 'include'
-            });
-            const authData = await authCheck.json();
-            
-            if (authData.isAuth) {
-                window.location.href = 'personalacount.html';
-            } else if (authData.rememberEmail) {
-                document.getElementById('email').value = authData.rememberEmail;
-                document.getElementById('password').focus();
-            }
-        
-            document.getElementById('registerForm').addEventListener('submit', async function(event) {
-                event.preventDefault();
-                
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                
-                const response = await fetch('/login', {
+        document.getElementById('registerForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+    
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember')?.checked;
+    
+            const response = await fetch('/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include',
-                body: JSON.stringify({ email, password })
-                });
-                
-                if (response.ok) {
+                body: JSON.stringify({ email, password, remember })
+            });
+            
+            if (response.ok) {
                 const role = await response.text();
                 
                 if (role === 'Admin') {
@@ -131,41 +323,28 @@
                 } else {
                     window.location.href = 'personalacount.html'; 
                 }
-                } else {
+            } else {
                 const errorMessage = await response.text();
                 alert('Ошибка авторизации: ' + errorMessage); 
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            const authCheck = await fetch('/api/check_auth', {
+                credentials: 'include'
+            });
+            
+            if (authCheck.ok) {
+                const authData = await authCheck.json();
+                
+                if (authData.isAuth) {
+                    window.location.href = 'personalacount.html';
+                } else if (authData.rememberEmail) {
+                    document.getElementById('email').value = authData.rememberEmail;
+                    document.getElementById('password').focus();
                 }
-            });
-            });
-        </script>         
-    </body>
-    <style>
-        @import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.cs");
-        * {
-            -webkit-font-smoothing: antialiased;
-            box-sizing: border-box;
-        }
-        html,
-        body {
-            margin: 0px;
-            height: 100%;
-        }
-
-        button:focus-visible {
-            outline: 2px solid #4a90e2 !important;
-            outline: -webkkit-focus-ring-color auto 5px !important;
-        }
-        a {
-            text-decoration: none;
-        }
-
-        :root {
-            --headings-h6-font-family: "Inter", Helvetica; 
-            --headings-h6-font-weight: 600;
-            --headings-h6-font-size: 14px; 
-            --headings-h6-letter-spacing: 0px; 
-            --headings-h6-line-height: 24px; 
-            --headings-h6-font-style: normal;    
-        }
-    </style>
+            }
+        });
+    </script>
+</body>
 </html>

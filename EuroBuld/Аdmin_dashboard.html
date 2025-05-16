@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>EuroBuld - Админ-панель | Таблицы</title>
-  <link rel="stylesheet" href="css/styele.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     * {
@@ -48,6 +47,11 @@
     
     .sidebar-header h3 i {
       color: #ff9e9e;
+    }
+
+    tr[data-selected="true"] {
+      background-color: #fff0f0 !important;
+      box-shadow: 0 0 0 2px #ffcccc;
     }
     
     .sidebar div {
@@ -114,7 +118,6 @@
       text-align: center;
     }
     
-    /* Основная область */
     .main {
       flex-grow: 1;
       display: flex;
@@ -122,7 +125,6 @@
       overflow: hidden;
     }
     
-    /* Верхняя панель */
     .topbar {
       background-color: white;
       padding: 15px 25px;
@@ -173,7 +175,6 @@
       background-color: #5a0a1f;
     }
     
-    /* Область таблицы */
     .table-wrapper {
       flex-grow: 1;
       padding: 25px;
@@ -214,7 +215,6 @@
       background-color: #fff0f0;
     }
     
-    /* Кнопки действий */
     .actions {
       padding: 15px 25px;
       background-color: white;
@@ -256,7 +256,6 @@
       transform: translateY(-2px);
     }
     
-    /* Модальное окно */
     #modal {
       display: none;
       position: fixed;
@@ -362,7 +361,6 @@
       background-color: #e0e0e0;
     }
     
-    /* Счетчик символов */
     .char-counter {
       font-size: 12px;
       color: #777;
@@ -374,7 +372,6 @@
       color: #e74c3c;
     }
     
-    /* Стили для раздела настроек */
     .settings-container {
       display: none;
       padding: 30px;
@@ -571,7 +568,6 @@
       to { transform: translateY(0); opacity: 1; }
     }
     
-    /* Кастомный скроллбар */
     ::-webkit-scrollbar {
       width: 8px;
       height: 8px;
@@ -591,7 +587,6 @@
       background: #a8a8a8;
     }
     
-    /* Уведомление */
     .notification {
       position: fixed;
       top: 20px;
@@ -621,7 +616,6 @@
       background-color: #ff9800;
     }
     
-    /* Темная тема */
     .dark-mode {
       background-color: #1a1a1a;
       color: #e0e0e0;
@@ -802,7 +796,6 @@
     </div>
   </div>
 
-  <!-- Раздел настроек -->
   <div class="settings-container" id="settingsContainer">
     <div class="settings-header">
       <h2><i class="fas fa-cog"></i> Настройки системы</h2>
@@ -822,7 +815,6 @@
       <div class="settings-tab" onclick="openSettingsTab('notifications')">Уведомления</div>
     </div>
     
-    <!-- Основные настройки -->
     <div class="settings-content active" id="generalSettings">
       <div class="setting-group">
         <h3><i class="fas fa-info-circle"></i> Информация о системе</h3>
@@ -918,7 +910,6 @@
       </div>
     </div>
     
-    <!-- Настройки безопасности -->
     <div class="settings-content" id="securitySettings">
       <div class="setting-group">
         <h3><i class="fas fa-shield-alt"></i> Параметры безопасности</h3>
@@ -1067,7 +1058,6 @@
       </div>
     </div>
     
-    <!-- Настройки уведомлений -->
     <div class="settings-content" id="notificationsSettings">
       <div class="setting-group">
         <h3><i class="fas fa-bell"></i> Уведомления</h3>
@@ -1163,7 +1153,6 @@
     </div>
   </div>
 
-  <!-- Модальное окно -->
   <div id="modal">
     <div id="modalContent">
       <h3 id="modalTitle">Добавить запись</h3>
@@ -1178,7 +1167,6 @@
     </div>
   </div>
   
-  <!-- Уведомление -->
   <div class="notification" id="notification">
     <i class="fas fa-check-circle"></i>
     <span id="notificationText">Успешно сохранено!</span>
@@ -1190,7 +1178,6 @@
     let rolesData = [];
     let statusesData = [];
     
-    // Показать уведомление
     function showNotification(message, type = 'success') {
       const notification = document.getElementById('notification');
       const notificationText = document.getElementById('notificationText');
@@ -1205,50 +1192,40 @@
       }, 3000);
     }
     
-    // Показать раздел настроек
     function showSettings() {
       document.getElementById('tableContainer').style.display = 'none';
       document.querySelector('.actions').style.display = 'none';
       document.getElementById('settingsContainer').style.display = 'block';
     }
     
-    // Переключение между вкладками настроек
     function openSettingsTab(tabId) {
-      // Скрыть все вкладки
       document.querySelectorAll('.settings-content').forEach(tab => {
         tab.classList.remove('active');
       });
       
-      // Убрать активный класс у всех табов
       document.querySelectorAll('.settings-tab').forEach(tab => {
         tab.classList.remove('active');
       });
       
-      // Показать выбранную вкладку
       document.getElementById(tabId + 'Settings').classList.add('active');
       
-      // Сделать активной кнопку таба
       event.target.classList.add('active');
     }
     
-    // Переключение темной темы
     document.getElementById('darkModeToggle').addEventListener('change', function() {
       document.body.classList.toggle('dark-mode');
       localStorage.setItem('darkMode', this.checked);
       showNotification(this.checked ? 'Темная тема включена' : 'Темная тема выключена');
     });
     
-    // Проверить сохраненную тему при загрузке
     if (localStorage.getItem('darkMode') === 'true') {
       document.getElementById('darkModeToggle').checked = true;
       document.body.classList.add('dark-mode');
     }
     
-    // Загрузка таблицы
     async function loadTable(type) {
       currentTable = type;
       
-      // Скрыть настройки, показать таблицу
       document.getElementById('settingsContainer').style.display = 'none';
       document.getElementById('tableContainer').style.display = 'block';
       document.querySelector('.actions').style.display = 'flex';
@@ -1284,7 +1261,6 @@
       html += '</tbody></table>';
       document.getElementById('tableContainer').innerHTML = html;
       
-      // Обновить активный пункт меню
       document.querySelectorAll('.sidebar div').forEach(div => {
         div.classList.remove('active');
       });
@@ -1293,7 +1269,7 @@
     
     function getMenuIndex(type) {
       const menuItems = ['users', 'staff', 'service', 'role', 'requests', 'foremen', 'status_orders', 'reports', 'settings'];
-      return menuItems.indexOf(type) + 3; // +3 потому что первые два элемента - заголовок и разделитель
+      return menuItems.indexOf(type) + 3;
     }
 
     const fieldConstraints = {
@@ -1438,16 +1414,14 @@
     }
 
     function selectRow(row) {
-  // Снимаем выделение со всех строк
-  document.querySelectorAll('tr').forEach(r => {
-    r.style.backgroundColor = '';
-    r.removeAttribute('data-selected');
-  });
-  
-  // Выделяем текущую строку
-  row.style.backgroundColor = '#ffe0e0';
-  row.setAttribute('data-selected', 'true');
-}
+      document.querySelectorAll('tr').forEach(r => {
+        r.style.backgroundColor = '';
+        r.removeAttribute('data-selected');
+      });
+      
+      row.style.backgroundColor = '#ffe0e0';
+      row.setAttribute('data-selected', 'true');
+    }
 
     function getSelectedRowData() {
       const selected = document.querySelector('tr[data-selected="true"]');
@@ -1458,11 +1432,10 @@
       const data = {};
       
       keys.forEach((key, i) => {
-        // Обработка изображения
         if (key === 'ImageBase64') {
           const img = cells[i].querySelector('img');
           if (img) {
-            data[key] = img.src.split(',')[1]; // Извлекаем base64 без префикса
+            data[key] = img.src.split(',')[1];
           }
         } else {
           data[key] = cells[i].textContent;
@@ -1473,132 +1446,172 @@
     }
 
     async function openModal(mode) {
-      const modal = document.getElementById('modal');
-      const formFields = document.getElementById('formFields');
-      const modalTitle = document.getElementById('modalTitle');
-      formFields.innerHTML = '';
+    const modal = document.getElementById('modal');
+    const formFields = document.getElementById('formFields');
+    const modalTitle = document.getElementById('modalTitle');
+    formFields.innerHTML = '';
 
-      let data = mode === 'edit' ? getSelectedRowData() : {};
-      if (mode === 'edit' && !data) {
-        showNotification('Выберите строку для изменения', 'error');
-        return;
-      }
+    let data = mode === 'edit' ? getSelectedRowData() : {};
+    if (mode === 'edit' && !data) {
+    showNotification('Выберите строку для изменения', 'error');
+    return;
+    }
 
-      modalTitle.textContent = mode === 'edit' ? 'Изменить запись' : 'Добавить запись';
+    modalTitle.textContent = mode === 'edit' ? 'Изменить запись' : 'Добавить запись';
 
-      // Загружаем дополнительные данные, если нужно
-      if (currentTable === 'processed_customer_orders') {
-        await loadStatuses();
-      }
-      if (currentTable === 'staff') {
-        await loadRoles();
-      }
+    if (currentTable === 'processed_customer_orders') {
+    await loadStatuses();
+    }
+    if (currentTable === 'staff') {
+    await loadRoles();
+    }
+    if (currentTable === 'service') {
+    const serviceData = mode === 'edit' ? getSelectedRowData() : {};
 
-      switch(currentTable) {
+    formFields.innerHTML = `
+      <div class="modal-field">
+        <label>Название услуги</label>
+        <input type="text" name="Item_Name" value="${serviceData.Item_Name || ''}" maxlength="100" required />
+      </div>
+      <div class="modal-field">
+        <label>Описание</label>
+        <textarea name="Item_Description" maxlength="500">${serviceData.Item_Description || ''}</textarea>
+        <div class="char-counter">${serviceData.Item_Description?.length || 0}/500</div>
+      </div>
+      <div class="modal-field">
+        <label>Цена</label>
+        <input type="number" name="Price" value="${serviceData.Price || ''}" min="0" max="999999.99" step="0.01" required />
+      </div>
+      <div class="modal-field">
+        <label>Изображение</label>
+        <input type="file" name="ImageBase64" accept="image/*" id="imageUpload" />
+        ${serviceData.ImageBase64 ? `
+          <div style="margin-top: 10px;">
+            <img src="data:image/jpeg;base64,${serviceData.ImageBase64}" 
+                style="max-width: 100px; max-height: 100px;"/>
+            <button type="button" onclick="document.getElementById('imageUpload').value = ''; this.previousElementSibling.remove()">
+              Удалить
+            </button>
+        </div>
+      ` : ''}
+      </div>
+    `;
+
+    const descTextarea = formFields.querySelector('textarea[name="Item_Description"]');
+    const charCounter = formFields.querySelector('.char-counter');
+
+    descTextarea.addEventListener('input', function() {
+    const currentLength = this.value.length;
+    charCounter.textContent = `${currentLength}/500`;
+    charCounter.classList.toggle('limit-reached', currentLength >= 500);
+    });
+
+    descTextarea.dispatchEvent(new Event('input'));
+    } else {
+
+    switch(currentTable) {
     case 'service':
-      const serviceData = mode === 'edit' ? getSelectedRowData() : {};
+    const serviceData = mode === 'edit' ? getSelectedRowData() : {};
+
+    for (let key in tableData[0]) {
+    if (key === 'ImageBase64') {
+    formFields.innerHTML += `
+      <div class="modal-field">
+        <label>Фото</label>
+        <input type="file" name="ImageBase64" accept="image/*" id="imageUpload" />
+        ${serviceData[key] ? `
+          <div style="margin-top: 10px;">
+            <img src="data:image/jpeg;base64,${serviceData[key]}" 
+                  style="max-width: 100px; max-height: 100px;"/>
+            <button type="button" onclick="document.getElementById('imageUpload').value = ''; this.previousElementSibling.remove()">
+              Удалить
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+    } 
+    else if (!key.toLowerCase().includes('id')) {
+      const fieldValue = serviceData[key] || '';
+      formFields.appendChild(createInputWithConstraints(key, fieldValue, currentTable));
+      }
+    }
+    break;
+
+    case 'processed_customer_orders':
+    formFields.innerHTML = `
+      <div class="modal-field">
+        <label>Статус</label>
+        <select name="ID_Status_Orders" required>
+          ${statusesData.map(status => 
+            `<option value="${status.ID_Status_Orders}" ${data.ID_Status_Orders == status.ID_Status_Orders ? 'selected' : ''}>
+              ${status.Name_Status}
+            </option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Дата начала</label>
+        <input type="date" name="Date_Start" value="${data.Date_Start || ''}" required />
+      </div>
+      <div class="modal-field">
+        <label>Дата окончания</label>
+        <input type="date" name="Date_Ending" value="${data.Date_Ending || ''}" />
+      </div>
+      <div class="modal-field">
+        <label>Итоговая сумма</label>
+        <input type="number" step="0.01" name="Final_sum" value="${data.Final_sum || ''}" required />
+      </div>
+    `;
+    break;
+    case 'role':
+    for (let key in tableData[0]) {
+      if (key === 'ID_Role') continue;
+      formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
+    }
+    break;
+    case 'staff':
+    const currentRoleId = data?.ID_Role || '';
+    const roleOptions = rolesData.map(role =>
+      `<option value="${role.ID_Role}" ${role.ID_Role == currentRoleId ? 'selected' : ''}>${role.roll_name}</option>`
+    ).join('');
+
+    formFields.innerHTML += `
+      <div class="modal-field">
+        <label>Роль</label>
+        <select name="ID_Role" required>${roleOptions}</select>
+      </div>
+    `;
+
+    for (let key in tableData[0]) {
+      if (['ID_Staff', 'ID_Role', 'roll_name'].includes(key)) continue;
+      formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
+    }
+    break;
+
+    default:
+    for (let key in tableData[0]) {
+      if (key.toLowerCase().includes('id')) continue;
       
-      // Создаём поля формы
-      for (let key in tableData[0]) {
-        if (key === 'ImageBase64') {
-          formFields.innerHTML += `
-            <div class="modal-field">
-              <label>Фото</label>
-              <input type="file" name="ImageBase64" accept="image/*" id="imageUpload" />
-              ${serviceData[key] ? `
-                <div style="margin-top: 10px;">
-                  <img src="data:image/jpeg;base64,${serviceData[key]}" 
-                       style="max-width: 100px; max-height: 100px;"/>
-                  <button type="button" onclick="document.getElementById('imageUpload').value = ''; this.previousElementSibling.remove()">
-                    Удалить
-                  </button>
-                </div>
-              ` : ''}
-            </div>
-          `;
-        } else if (!key.toLowerCase().includes('id')) {
-          // Для остальных полей
-          const fieldValue = serviceData[key] || '';
-          formFields.appendChild(createInputWithConstraints(key, fieldValue, currentTable));
-        }
+      if (key === 'Final_sum' || key === 'Price' || key === 'salary' || 
+          key === 'Date_Start' || key === 'Date_Ending' || key === 'Date_birth' || 
+          key === 'Date_employment' || key === 'Order_Date') {
+        formFields.innerHTML += `
+          <div class="modal-field">
+            <label>${key}</label>
+            <input name="${key}" value="${data?.[key] || ''}" 
+              ${key.includes('Date') ? 'type="date"' : 'type="number" step="0.01"'} 
+              required />
+          </div>
+        `;
+      } else {
+        formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
       }
-      break;
+    }
+    }
+    }
 
-        case 'processed_customer_orders':
-          formFields.innerHTML = `
-            <div class="modal-field">
-              <label>Статус</label>
-              <select name="ID_Status_Orders" required>
-                ${statusesData.map(status => 
-                  `<option value="${status.ID_Status_Orders}" ${data.ID_Status_Orders == status.ID_Status_Orders ? 'selected' : ''}>
-                    ${status.Name_Status}
-                  </option>`
-                ).join('')}
-              </select>
-            </div>
-            <div class="modal-field">
-              <label>Дата начала</label>
-              <input type="date" name="Date_Start" value="${data.Date_Start || ''}" required />
-            </div>
-            <div class="modal-field">
-              <label>Дата окончания</label>
-              <input type="date" name="Date_Ending" value="${data.Date_Ending || ''}" />
-            </div>
-            <div class="modal-field">
-              <label>Итоговая сумма</label>
-              <input type="number" step="0.01" name="Final_sum" value="${data.Final_sum || ''}" required />
-            </div>
-          `;
-          break;
-        case 'role':
-          for (let key in tableData[0]) {
-            if (key === 'ID_Role') continue;
-            formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
-          }
-          break;
-        case 'staff':
-          const currentRoleId = data?.ID_Role || '';
-          const roleOptions = rolesData.map(role =>
-            `<option value="${role.ID_Role}" ${role.ID_Role == currentRoleId ? 'selected' : ''}>${role.roll_name}</option>`
-          ).join('');
-
-          formFields.innerHTML += `
-            <div class="modal-field">
-              <label>Роль</label>
-              <select name="ID_Role" required>${roleOptions}</select>
-            </div>
-          `;
-
-          for (let key in tableData[0]) {
-            if (['ID_Staff', 'ID_Role', 'roll_name'].includes(key)) continue;
-            formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
-          }
-          break;
-
-        default:
-          // Общий случай для всех таблиц
-          for (let key in tableData[0]) {
-            if (key.toLowerCase().includes('id')) continue;
-            
-            if (key === 'Final_sum' || key === 'Price' || key === 'salary' || 
-                key === 'Date_Start' || key === 'Date_Ending' || key === 'Date_birth' || 
-                key === 'Date_employment' || key === 'Order_Date') {
-              formFields.innerHTML += `
-                <div class="modal-field">
-                  <label>${key}</label>
-                  <input name="${key}" value="${data?.[key] || ''}" 
-                    ${key.includes('Date') ? 'type="date"' : 'type="number" step="0.01"'} 
-                    required />
-                </div>
-              `;
-            } else {
-              formFields.appendChild(createInputWithConstraints(key, data?.[key], currentTable));
-            }
-          }
-      }
-
-      // Устанавливаем ID записи для редактирования
-      document.getElementById('recordId').value = data?.[Object.keys(tableData[0])[0]] || '';
+    document.getElementById('recordId').value = data?.[Object.keys(tableData[0])[0]] || '';
       modal.style.display = 'flex';
     }
 
@@ -1613,33 +1626,26 @@
       const fileInput = form.querySelector('input[type="file"]');
       const id = form.querySelector('#recordId').value;
 
-      // Собираем данные из формы
       for (let input of form.querySelectorAll('input[name]:not([type="file"]), select[name], textarea[name]')) {
-    data[input.name] = input.value;
-  }
-
-  // Обработка файла изображения
-  if (fileInput && fileInput.files.length > 0) {
-    const file = fileInput.files[0];
-    const base64 = await fileToBase64(file);
-    data.ImageBase64 = base64.split(',')[1];
-  } else if (form.querySelector('img')) {
-    // Если изображение было, но не изменялось
-    const imgSrc = form.querySelector('img').src;
-    data.ImageBase64 = imgSrc.split(',')[1];
-  }
-
-      // Обработка файла изображения
-      if (fileInput && fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const base64 = await fileToBase64(file);
-        data.ImageBase64 = base64.split(',')[1];
+        if (input.name.toLowerCase().includes('id')) continue;
+        data[input.name] = input.type === 'number' ? parseFloat(input.value) : input.value;
       }
 
-      const method = id ? 'PUT' : 'POST';
-      const url = `/api/${currentTable}${id ? '/' + id : ''}`;
+      if (currentTable === 'service') {
+        if (fileInput && fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const base64 = await fileToBase64(file);
+          data.ImageBase64 = base64.split(',')[1];
+        } else if (form.querySelector('img')) {
+          const imgSrc = form.querySelector('img').src;
+          data.ImageBase64 = imgSrc.split(',')[1];
+        }
+      }
 
       try {
+        const url = `/api/${currentTable}${id ? `/${id}` : ''}`;
+        const method = id ? 'PUT' : 'POST';
+
         const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
@@ -1647,7 +1653,7 @@
         });
         
         if (response.ok) {
-          showNotification('Запись успешно сохранена!');
+          showNotification(id ? 'Запись успешно обновлена!' : 'Запись успешно добавлена!');
           closeModal();
           loadTable(currentTable);
         } else {
@@ -1655,7 +1661,7 @@
           showNotification(`Ошибка: ${error}`, 'error');
         }
       } catch (error) {
-        console.error('Ошибка при отправке:', error);
+        console.error('Ошибка:', error);
         showNotification('Ошибка при сохранении записи', 'error');
       }
     });
@@ -1676,14 +1682,14 @@
         return;
       }
 
-      if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+      if (!confirm('Вы уверены, что хотите удалить эту запись? Это действие нельзя отменить.')) {
         return;
       }
 
-      const id = selected[Object.keys(selected)[0]];
-      
       try {
-        const response = await fetch(`/api/${currentTable}/${id}`, {
+        const idField = Object.keys(tableData[0])[0];
+        
+        const response = await fetch(`/api/${currentTable}/${selected[idField]}`, {
           method: 'DELETE'
         });
         
@@ -1713,12 +1719,10 @@
       rolesData = await res.json();
     }
 
-    // Инициализация
     document.addEventListener('DOMContentLoaded', () => {
       loadTable('users');
       loadRoles();
       
-      // Скрыть настройки по умолчанию
       document.getElementById('settingsContainer').style.display = 'none';
     });
   </script>
