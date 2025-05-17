@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Страница не найдена - EuroBuld</title>
+    <link rel="stylesheet" href="/css/error.css">
+</head>
+<body>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        .error-container {
+            max-width: 600px;
+            padding: 2rem;
+        }
+
+        .error-content h1 {
+            font-size: 6rem;
+            margin: 0;
+            color: #2c3e50;
+            font-weight: 700;
+        }
+
+        .error-content h2 {
+            font-size: 2rem;
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .error-content p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
+    <div class="error-container">
+        <div class="error-content">
+            <h1>404</h1>
+            <h2>Страница не найдена</h2>
+            <p>Извините, запрашиваемая страница не существует или была перемещена.</p>
+            <div class="error-actions">
+                <a href="/" class="btn">На главную</a>
+                <a href="javascript:history.back()" class="btn btn-secondary">Назад</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

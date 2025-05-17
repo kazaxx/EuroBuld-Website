@@ -1431,6 +1431,11 @@
       const keys = Object.keys(tableData[0]);
       const data = {};
       
+      // Найдем оригинальную запись в tableData по ID
+      const idField = Object.keys(tableData[0])[0];
+      const rowId = cells[0].textContent;
+      const originalData = tableData.find(item => String(item[idField]) === rowId);
+      
       keys.forEach((key, i) => {
         if (key === 'ImageBase64') {
           const img = cells[i].querySelector('img');
@@ -1438,7 +1443,12 @@
             data[key] = img.src.split(',')[1];
           }
         } else {
-          data[key] = cells[i].textContent;
+          // Используем оригинальное значение из tableData для числовых полей
+          if (originalData && (key === 'Price' || key === 'Final_sum' || key === 'salary')) {
+            data[key] = originalData[key];
+          } else {
+            data[key] = cells[i].textContent;
+          }
         }
       });
       
@@ -1480,7 +1490,7 @@
       </div>
       <div class="modal-field">
         <label>Цена</label>
-        <input type="number" name="Price" value="${serviceData.Price || ''}" min="0" max="999999.99" step="0.01" required />
+        <input type="number" name="Price" value="${serviceData.Price !== undefined ? serviceData.Price : ''}" min="0" max="999999.99" step="0.01" required />
       </div>
       <div class="modal-field">
         <label>Изображение</label>
@@ -1492,8 +1502,8 @@
             <button type="button" onclick="document.getElementById('imageUpload').value = ''; this.previousElementSibling.remove()">
               Удалить
             </button>
-        </div>
-      ` : ''}
+          </div>
+        ` : ''}
       </div>
     `;
 

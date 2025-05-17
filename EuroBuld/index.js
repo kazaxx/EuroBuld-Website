@@ -1528,60 +1528,6 @@ const express = require('express');
     }
   });
 
-  // Эффективность сотрудников
-  app.get('/api/reports/staff-performance', async (req, res) => {
-    const { period } = req.query;
-    let dateCondition = '';
-    
-    switch (period) {
-      case 'month':
-        dateCondition = 'AND pco.Date_Start >= DATEADD(MONTH, -1, GETDATE())';
-        break;
-      case 'quarter':
-        dateCondition = 'AND pco.Date_Start >= DATEADD(QUARTER, -1, GETDATE())';
-        break;
-      case 'year':
-        dateCondition = 'AND pco.Date_Start >= DATEADD(YEAR, -1, GETDATE())';
-        break;
-    }
-    
-    try {
-      const result = await app.locals.db.request().query(`
-        SELECT 
-          s.ID_Staff,
-          s.First_name + ' ' + s.Last_name + ' ' + ISNULL(s.Patronymic, '') AS StaffName,
-          r.roll_name AS Role,
-          COUNT(pco.ID_Processed_customer_orders) AS OrderCount,
-          AVG(DATEDIFF(DAY, pco.Date_Start, ISNULL(pco.Date_Ending, GETDATE()))) AS AvgDays,
-          SUM(CAST(pco.Final_sum AS DECIMAL(10,2))) AS Revenue,
-          CASE 
-            WHEN COUNT(pco.ID_Processed_customer_orders) = 0 THEN 0
-            ELSE 100 * SUM(CASE WHEN so.Name_Status = 'Завершен' THEN 1 ELSE 0 END) / COUNT(pco.ID_Processed_customer_orders)
-          END AS Efficiency
-        FROM Staff s
-        LEFT JOIN Role r ON s.ID_Role = r.ID_Role
-        LEFT JOIN Processed_customer_orders pco ON s.ID_Staff = pco.ID_Staff
-        LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
-        WHERE pco.ID_Processed_customer_orders IS NOT NULL ${dateCondition}
-        GROUP BY s.ID_Staff, s.First_name, s.Last_name, s.Patronymic, r.roll_name
-        ORDER BY Revenue DESC
-      `);
-      
-      res.json(result.recordset.map(row => ({
-        id: row.ID_Staff,
-        name: row.StaffName,
-        role: row.Role,
-        orders: row.OrderCount,
-        avgDays: Math.round(row.AvgDays) || 0,
-        revenue: row.Revenue || 0,
-        efficiency: Math.round(row.Efficiency) || 0
-      })));
-    } catch (error) {
-      console.error('Ошибка при получении эффективности сотрудников:', error);
-      res.status(500).send('Ошибка сервера');
-    }
-  });
-
   // Финансовые показатели
   app.get('/api/reports/finance', async (req, res) => {
     const { period } = req.query;
@@ -1589,42 +1535,34 @@ const express = require('express');
     
     switch (period) {
       case 'month':
-        groupBy = 'YEAR(Date), MONTH(Date)';
+        groupBy = 'YEAR(pco.Date_Start), MONTH(pco.Date_Start)';
         dateFormat = 'YYYY-MM';
         break;
       case 'quarter':
-        groupBy = 'YEAR(Date), DATEPART(QUARTER, Date)';
+        groupBy = 'YEAR(pco.Date_Start), DATEPART(QUARTER, pco.Date_Start)';
         dateFormat = 'YYYY-Q';
         break;
       case 'year':
-        groupBy = 'YEAR(Date)';
+        groupBy = 'YEAR(pco.Date_Start)';
         dateFormat = 'YYYY';
         break;
       default:
-        groupBy = 'YEAR(Date), MONTH(Date)';
+        groupBy = 'YEAR(pco.Date_Start), MONTH(pco.Date_Start)';
         dateFormat = 'YYYY-MM';
     }
     
     try {
       const result = await app.locals.db.request().query(`
-        WITH FinanceData AS (
-          SELECT 
-            pco.Date_Start AS Date,
-            CAST(pco.Final_sum AS DECIMAL(10,2)) AS Revenue,
-            CAST(r.salary AS DECIMAL(10,2)) * COUNT(DISTINCT s.ID_Staff) AS Expenses
-          FROM Processed_customer_orders pco
-          LEFT JOIN Staff s ON pco.ID_Staff = s.ID_Staff
-          LEFT JOIN Role r ON s.ID_Role = r.ID_Role
-          GROUP BY pco.Date_Start, r.salary
-        )
         SELECT 
-          FORMAT(MIN(Date), '${dateFormat}') AS Period,
-          SUM(Revenue) AS Revenue,
-          SUM(Expenses) AS Expenses,
-          SUM(Revenue) - SUM(Expenses) AS Profit
-        FROM FinanceData
+          FORMAT(MIN(pco.Date_Start), '${dateFormat}') AS Period,
+          SUM(TRY_CONVERT(DECIMAL(10,2), pco.Final_sum)) AS Revenue,
+          SUM(TRY_CONVERT(DECIMAL(10,2), r.salary)) AS Expenses,
+          SUM(TRY_CONVERT(DECIMAL(10,2), pco.Final_sum)) - SUM(TRY_CONVERT(DECIMAL(10,2), r.salary)) AS Profit
+        FROM Processed_customer_orders pco
+        LEFT JOIN Staff s ON pco.ID_Staff = s.ID_Staff
+        LEFT JOIN Role r ON s.ID_Role = r.ID_Role
         GROUP BY ${groupBy}
-        ORDER BY MIN(Date)
+        ORDER BY MIN(pco.Date_Start)
       `);
       
       const labels = result.recordset.map(row => row.Period);
@@ -2598,6 +2536,484 @@ const express = require('express');
         res.status(500).json({ error: 'Ошибка сервера' });
     }
   });
+
+  // Обработка 404 ошибки (Not Found)
+  app.use((req, res, next) => {
+    const error = new Error('Страница не найдена');
+    error.status = 404;
+    
+    if (!req.path.startsWith('/css/') && !req.path.startsWith('/images/') && !req.path.startsWith('/js/')) {
+      console.error(`404 Not Found: ${req.method} ${req.originalUrl} from ${req.ip}`);
+    }
+    
+    // Для 404 ошибок рендерим специальную страницу
+    if (req.accepts('html')) {
+      const html = `
+  <!DOCTYPE html>
+  <html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Не найдено | EuroBuld</title>
+    <style>
+      :root {
+        --primary-color: #430113;
+        --secondary-color: #560019;
+        --accent-color: #8a1538;
+        --text-dark: #131416;
+        --text-light: #777e90;
+        --bg-light: #f4f7fc;
+        --white: #ffffff;
+        --transition: all 0.3s ease;
+      }
+      
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Montserrat', 'Segoe UI', sans-serif;
+        background-color: var(--bg-light);
+        color: var(--text-dark);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        overflow: hidden;
+        padding: 20px;
+        background-image: linear-gradient(135deg, rgba(67,1,19,0.05) 0%, rgba(255,255,255,0.9) 100%);
+      }
+      
+      .error-container {
+        text-align: center;
+        max-width: 600px;
+        padding: 40px;
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(67,1,19,0.1);
+        position: relative;
+        z-index: 1;
+        border: 1px solid rgba(67,1,19,0.1);
+      }
+      
+      .error-code {
+        font-size: 120px;
+        font-weight: 900;
+        color: var(--primary-color);
+        line-height: 1;
+        margin-bottom: 10px;
+        text-shadow: 3px 3px 0 rgba(67,1,19,0.1);
+      }
+      
+      .error-title {
+        font-size: 28px;
+        margin-bottom: 15px;
+        color: var(--secondary-color);
+        font-weight: 700;
+      }
+      
+      .error-message {
+        font-size: 18px;
+        margin-bottom: 30px;
+        color: var(--text-light);
+        line-height: 1.5;
+      }
+      
+      .btn {
+        display: inline-block;
+        background-color: var(--primary-color);
+        color: var(--white);
+        padding: 12px 30px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: var(--transition);
+        border: 2px solid var(--primary-color);
+        font-size: 16px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      .btn:hover {
+        background-color: transparent;
+        color: var(--primary-color);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(67,1,19,0.2);
+      }
+      
+      /* Анимация строительных инструментов */
+      .construction-animation {
+        position: relative;
+        width: 300px;
+        height: 200px;
+        margin: 0 auto 30px;
+      }
+      
+      .hammer {
+        position: absolute;
+        width: 100px;
+        height: 20px;
+        background: linear-gradient(to right, #333, #555, #333);
+        top: 50px;
+        left: 50%;
+        transform-origin: 10% 50%;
+        transform: translateX(-50%) rotate(-45deg);
+        border-radius: 5px;
+        animation: hammerHit 2s infinite ease-in-out;
+        z-index: 3;
+      }
+      
+      .hammer-head {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(to right, #222, #444, #222);
+        right: -10px;
+        top: -5px;
+        border-radius: 3px;
+      }
+      
+      .hammer-handle {
+        position: absolute;
+        width: 80px;
+        height: 10px;
+        background: linear-gradient(to right, #654321, #8b4513, #654321);
+        left: 10px;
+        top: 5px;
+        border-radius: 5px;
+      }
+      
+      .wall {
+        position: absolute;
+        width: 200px;
+        height: 120px;
+        background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 5px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+      }
+      
+      .brick {
+        position: absolute;
+        width: 40px;
+        height: 20px;
+        background: linear-gradient(to right, #b22222, #cd5c5c, #b22222);
+        border-radius: 2px;
+      }
+      
+      .sparks {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #ffcc00;
+        border-radius: 50%;
+        top: 60px;
+        left: 50%;
+        opacity: 0;
+        box-shadow: 0 0 10px 5px #ffcc00;
+        animation: sparkle 2s infinite;
+      }
+      
+      @keyframes hammerHit {
+        0%, 100% {
+          transform: translateX(-50%) rotate(-45deg);
+        }
+        30% {
+          transform: translateX(-50%) rotate(10deg);
+        }
+        35% {
+          transform: translateX(-50%) rotate(5deg);
+        }
+      }
+      
+      @keyframes sparkle {
+        0%, 100% {
+          opacity: 0;
+          transform: translate(-50%, 0) scale(0.5);
+        }
+        30% {
+          opacity: 1;
+          transform: translate(-50%, -20px) scale(1);
+        }
+        35% {
+          opacity: 0;
+          transform: translate(-50%, -30px) scale(0.5);
+        }
+      }
+      
+      /* Фирменные элементы EuroBuld */
+      .logo-mark {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary-color);
+      }
+      
+      .construction-sign {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: var(--accent-color);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: 600;
+        transform: rotate(5deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="error-container">
+      
+      <div class="construction-animation">
+        <div class="hammer">
+          <div class="hammer-head"></div>
+          <div class="hammer-handle"></div>
+        </div>
+        <div class="wall"></div>
+        <div class="sparks"></div>
+      </div>
+      
+      <h1 class="error-code">404</h1>
+      <h2 class="error-title">ВЕДУТСЯ РЕМОНТНЫЕ РАБОТЫ</h2>
+      <p class="error-message">
+        Запрашиваемая страница находится на реконструкции. Наши специалисты уже работают над устранением проблемы.
+      </p>
+      <a href="/" class="btn">Вернуться на главную</a>
+      
+      <div class="construction-sign">СТРОЙКА!</div>
+    </div>
+    
+    <script>
+      // Создаем кирпичную стену
+      const wall = document.querySelector('.wall');
+      const brickWidth = 40;
+      const brickHeight = 20;
+      const wallWidth = 200;
+      const wallHeight = 120;
+      
+      for (let row = 0; row < wallHeight / brickHeight; row++) {
+        for (let col = 0; col < wallWidth / brickWidth; col++) {
+          if (Math.random() > 0.3) { // Пропускаем некоторые кирпичи
+            const brick = document.createElement('div');
+            brick.className = 'brick';
+            brick.style.left = (col * brickWidth + (row % 2 ? brickWidth/2 : 0)) + 'px';
+            brick.style.top = (row * brickHeight) + 'px';
+            brick.style.opacity = 0.7 + Math.random() * 0.3;
+            wall.appendChild(brick);
+          }
+        }
+      }
+    </script>
+  </body>
+  </html>
+      `;
+      
+      return res.status(404).send(html);
+    }
+    
+    next(error);
+  });
+
+  // Универсальный обработчик ошибок
+  app.use((err, req, res, next) => {
+    // Устанавливаем статус по умолчанию, если он не задан
+    err.status = err.status || 500;
+    
+    // Логирование ошибок
+    console.error(`[${new Date().toISOString()}] Ошибка ${err.status}: ${err.message}`);
+    console.error(err.stack);
+    
+    // Формируем ответ в зависимости от типа запроса
+    if (req.accepts('html')) {
+      // Для HTML-запросов отправляем красивую страницу ошибки
+      const errorPage = `
+        <!DOCTYPE html>
+        <html lang="ru">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Ошибка ${err.status} | EuroBuld</title>
+          <style>
+            body {
+              font-family: 'Arial', sans-serif;
+              background-color: #f8f9fa;
+              color: #343a40;
+              margin: 0;
+              padding: 0;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              text-align: center;
+            }
+            .error-container {
+              background: white;
+              padding: 2rem;
+              border-radius: 8px;
+              box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+              max-width: 600px;
+            }
+            h1 {
+              color: #dc3545;
+              font-size: 3rem;
+              margin-bottom: 1rem;
+            }
+            h2 {
+              font-size: 1.5rem;
+              margin-bottom: 1.5rem;
+            }
+            p {
+              margin-bottom: 1.5rem;
+              line-height: 1.6;
+            }
+            a {
+              color: #007bff;
+              text-decoration: none;
+              font-weight: bold;
+            }
+            a:hover {
+              text-decoration: underline;
+            }
+            .error-details {
+              margin-top: 2rem;
+              padding: 1rem;
+              background: #f8f9fa;
+              border-radius: 4px;
+              font-family: monospace;
+              text-align: left;
+              font-size: 0.9rem;
+              color: #6c757d;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="error-container">
+            <h1>${err.status}</h1>
+            <h2>${err.status === 404 ? 'Страница не найдена' : 'Произошла ошибка'}</h2>
+            <p>
+              ${err.status === 404 
+                ? 'Запрошенная страница не существует. Проверьте URL или вернитесь на главную.' 
+                : 'При обработке вашего запроса произошла ошибка. Пожалуйста, попробуйте позже.'}
+            </p>
+            <p><a href="/">Вернуться на главную</a></p>
+            
+            ${process.env.NODE_ENV === 'development' 
+              ? `<div class="error-details">
+                  <strong>Сообщение:</strong> ${err.message}<br>
+                  <strong>Стек:</strong><br>${err.stack}
+                </div>` 
+              : ''}
+          </div>
+        </body>
+        </html>
+      `;
+      
+      res.status(err.status).send(errorPage);
+    } else if (req.accepts('json')) {
+      // Для API-запросов отправляем JSON
+      res.status(err.status).json({
+        error: {
+          status: err.status,
+          message: err.message,
+          ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+        }
+      });
+    } else {
+      // Для всех остальных типов - простой текст
+      res.status(err.status).type('txt').send(`${err.status}: ${err.message}`);
+    }
+  });
+
+  // Также можно добавить обработку специфических ошибок базы данных
+  app.use((err, req, res, next) => {
+    if (err instanceof mssql.RequestError) {
+      console.error('Ошибка SQL Server:', err);
+      err.message = 'Ошибка базы данных';
+      err.status = 500;
+    }
+    next(err);
+  });
+
+  // Обработка ошибок валидации Joi
+  app.use((err, req, res, next) => {
+    if (err instanceof Joi.ValidationError) {
+      err.message = 'Ошибка валидации данных';
+      err.status = 400;
+      err.details = err.details.map(d => ({
+        message: d.message,
+        path: d.path,
+        type: d.type
+      }));
+    }
+    next(err);
+  });
+
+  // Обработка необработанных promise rejections
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+
+  // Обработка неотловленных исключений
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    process.exit(1); // Завершаем процесс, так как приложение в нестабильном состоянии
+  });
+
+  // Теперь можно добавить несколько полезных middleware для улучшения обработки ошибок:
+
+  // Middleware для проверки JSON
+  app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+      err.message = 'Неверный формат JSON';
+      return res.status(400).json({ error: 'Неверный формат JSON' });
+    }
+    next();
+  });
+
+  // Middleware для обработки CSRF ошибок
+  app.use((err, req, res, next) => {
+    if (err.code === 'EBADCSRFTOKEN') {
+      err.status = 403;
+      err.message = 'Недействительный CSRF-токен';
+    }
+    next(err);
+  });
+
+  // Пример маршрута для тестирования ошибок (можно удалить в production)
+  if (process.env.NODE_ENV === 'development') {
+    app.get('/error-test', (req, res, next) => {
+      // Генерируем разные типы ошибок для тестирования
+      const errorType = req.query.type || '500';
+      
+      switch(errorType) {
+        case '404':
+          const err404 = new Error('Тестовая 404 ошибка');
+          err404.status = 404;
+          throw err404;
+        case '403':
+          const err403 = new Error('Тестовая 403 ошибка');
+          err403.status = 403;
+          throw err403;
+        case 'db':
+          // Симулируем ошибку базы данных
+          throw new mssql.RequestError('Тестовая ошибка SQL', 'ETEST');
+        case 'validation':
+          // Симулируем ошибку валидации
+          const { error } = validationSchemas.register.validate({});
+          throw error;
+        default:
+          throw new Error('Тестовая 500 ошибка');
+      }
+    });
+  }
 
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);

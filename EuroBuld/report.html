@@ -9,13 +9,45 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
     :root {
-      --primary-color: #4f46e5;
-      --secondary-color: #6366f1;
-      --bg-light: #f3f4f6;
-      --bg-white: #ffffff;
-      --text-dark: #111827;
-      --text-muted: #6b7280;
-      --border-light: #e5e7eb;
+      /* Основная цветовая палитра */
+      --primary-color: #430113;       /* Глубокий бордовый */
+      --primary-light: #560019;       /* Светлый бордовый */
+      --secondary-color: #E8C300;     /* Золотой акцент */
+      --accent-color: #9A7B4F;        /* Коричневый акцент */
+      
+      /* Фоны */
+      --bg-light: #F9F5F7;            /* Светлый фоновый */
+      --bg-white: #FFFFFF;            /* Белый */
+      --bg-dark: #2A0A1A;             /* Темный фон */
+      
+      /* Текст */
+      --text-dark: #2D3748;           /* Темный текст */
+      --text-muted: #718096;          /* Приглушенный текст */
+      --text-light: #FFFFFF;          /* Светлый текст */
+      
+      /* Границы */
+      --border-light: #E2E8F0;        /* Светлая граница */
+      --border-dark: #430113;         /* Темная граница */
+      
+      /* Дополнительные цвета */
+      --success-color: #38A169;       /* Зеленый */
+      --warning-color: #DD6B20;       /* Оранжевый */
+      --danger-color: #E53E3E;        /* Красный */
+      --info-color: #3182CE;          /* Синий */
+      
+      /* Тени */
+      --shadow-sm: 0 1px 3px rgba(67, 1, 19, 0.1);
+      --shadow-md: 0 4px 6px rgba(67, 1, 19, 0.1);
+      --shadow-lg: 0 10px 25px rgba(67, 1, 19, 0.1);
+      
+      /* Скругления */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      
+      /* Анимации */
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     * {
@@ -25,50 +57,95 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'DM Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--bg-light);
       height: 100vh;
       display: flex;
       flex-direction: column;
+      color: var(--text-dark);
+      line-height: 1.6;
     }
 
     .topbar {
-      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-      color: #fff;
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+      color: var(--text-light);
       padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--shadow-md);
+      position: relative;
+      z-index: 10;
+    }
+
+    .topbar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
     }
 
     .topbar-actions {
       display: flex;
-      gap: 1rem;
+      gap: 1.5rem;
+      align-items: center;
     }
 
     .topbar a {
       text-decoration: none;
-      color: #fff;
-      font-weight: bold;
+      color: var(--text-light);
+      font-weight: 600;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      transition: var(--transition);
+      padding: 0.5rem 0;
+      position: relative;
+    }
+
+    .topbar a:hover {
+      color: var(--secondary-color);
+    }
+
+    .topbar a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--secondary-color);
+      transition: var(--transition);
+    }
+
+    .topbar a:hover::after {
+      width: 100%;
     }
 
     .container {
       flex: 1;
       padding: 2rem;
       overflow-y: auto;
+      background-color: var(--bg-light);
     }
 
     .section {
       background: var(--bg-white);
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-sm);
       margin-bottom: 2rem;
       padding: 2rem;
       animation: fadeIn 0.6s ease;
+      border: 1px solid var(--border-light);
+      transition: var(--transition);
+    }
+
+    .section:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
     }
 
     .section-header {
@@ -77,90 +154,153 @@
       align-items: center;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-light);
     }
 
     .section-header h2 {
       font-size: 1.5rem;
-      color: var(--text-dark);
+      color: var(--primary-color);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-header h2::before {
+      content: '';
+      display: block;
+      width: 8px;
+      height: 24px;
+      background: linear-gradient(var(--primary-color), var(--primary-light));
+      border-radius: var(--radius-full);
     }
 
     .section-actions {
       display: flex;
       gap: 1rem;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .section-header select, 
-    .section-header input,
-    .section-header button {
+    .section-header input {
       padding: 0.5rem 1rem;
       border: 1px solid var(--border-light);
-      border-radius: 8px;
-      background: var(--bg-light);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      font-size: 1rem;
+      transition: var(--transition);
+      min-width: 180px;
+    }
+
+    .section-header select:focus, 
+    .section-header input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(67, 1, 19, 0.1);
+    }
+
+    .section-header button {
+      padding: 0.5rem 1.5rem;
+      border-radius: var(--radius-md);
+      background: var(--primary-color);
+      color: var(--text-light);
+      cursor: pointer;
+      border: none;
+      font-weight: 600;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       font-size: 1rem;
     }
 
-    .section-header button {
-      background: var(--primary-color);
-      color: white;
-      cursor: pointer;
-      border: none;
-      transition: background 0.2s;
-    }
-
     .section-header button:hover {
-      background: var(--secondary-color);
+      background: var(--primary-light);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
     }
 
     .section-header button.secondary {
-      background: #6b7280;
+      background: var(--text-muted);
+    }
+
+    .section-header button.secondary:hover {
+      background: #5A6268;
     }
 
     .section-header button.danger {
-      background: #ef4444;
+      background: var(--danger-color);
+    }
+
+    .section-header button.danger:hover {
+      background: #C53030;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 1.5rem;
     }
 
     .card {
       background: var(--bg-white);
       border: 1px solid var(--border-light);
-      border-radius: 12px;
-      padding: 1rem;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
       text-align: center;
-      transition: 0.3s;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
     }
 
     .card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.1);
+      box-shadow: 0 10px 25px rgba(67, 1, 19, 0.1);
     }
 
     .card .label {
       color: var(--text-muted);
       font-size: 0.9rem;
+      margin-bottom: 0.5rem;
     }
 
     .card .value {
       font-size: 1.8rem;
-      font-weight: bold;
+      font-weight: 700;
       color: var(--primary-color);
       margin: 0.5rem 0;
+      font-family: 'DM Sans', sans-serif;
     }
 
     .card .change {
       font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius-full);
+      display: inline-block;
     }
 
     .chart-container {
       position: relative;
       height: 300px;
       margin-bottom: 1rem;
+      background: var(--bg-white);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      border: 1px solid var(--border-light);
     }
 
     .date-filters {
@@ -171,42 +311,69 @@
       flex-wrap: wrap;
     }
 
-    .date-filters input, .date-filters button {
+    .date-filters input {
       padding: 0.5rem 1rem;
       border: 1px solid var(--border-light);
-      border-radius: 8px;
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    .date-filters input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(67, 1, 19, 0.1);
     }
 
     .date-filters button {
+      padding: 0.5rem 1.5rem;
       background: var(--primary-color);
-      color: #fff;
+      color: var(--text-light);
       cursor: pointer;
       border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .date-filters button:hover {
+      background: var(--primary-light);
+      transform: translateY(-1px);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 1rem;
+      background: var(--bg-white);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
 
     table thead {
-      background: var(--bg-light);
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+      color: var(--text-light);
     }
 
     th, td {
       text-align: left;
-      padding: 0.8rem 1rem;
+      padding: 1rem;
       border-bottom: 1px solid var(--border-light);
     }
 
     th {
-      font-weight: bold;
-      color: var(--text-dark);
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
     }
 
     tr:hover {
-      background: #f9fafb;
+      background: rgba(67, 1, 19, 0.03);
     }
 
     .tabs {
@@ -216,21 +383,27 @@
     }
 
     .tab {
-      padding: 0.8rem 1.2rem;
+      padding: 0.8rem 1.5rem;
       cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: 0.3s;
+      border-bottom: 3px solid transparent;
+      transition: var(--transition);
       color: var(--text-muted);
+      font-weight: 600;
+      position: relative;
+    }
+
+    .tab:hover {
+      color: var(--primary-color);
     }
 
     .tab.active {
       border-color: var(--primary-color);
       color: var(--primary-color);
-      font-weight: bold;
     }
 
     .tab-content {
       display: none;
+      animation: fadeIn 0.4s ease;
     }
 
     .tab-content.active {
@@ -238,25 +411,37 @@
     }
 
     .badge {
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-full);
       font-size: 0.75rem;
-      font-weight: bold;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
     }
 
     .badge-success {
-      background-color: #d1fae5;
-      color: #065f46;
+      background-color: #F0FFF4;
+      color: var(--success-color);
+      border: 1px solid #C6F6D5;
     }
 
     .badge-warning {
-      background-color: #fef3c7;
-      color: #92400e;
+      background-color: #FFFAF0;
+      color: var(--warning-color);
+      border: 1px solid #FEEBC8;
     }
 
     .badge-danger {
-      background-color: #fee2e2;
-      color: #991b1b;
+      background-color: #FFF5F5;
+      color: var(--danger-color);
+      border: 1px solid #FED7D7;
+    }
+
+    .badge-info {
+      background-color: #EBF8FF;
+      color: var(--info-color);
+      border: 1px solid #BEE3F8;
     }
 
     .report-actions {
@@ -267,26 +452,44 @@
     }
 
     .detailed-report {
-      background: white;
+      background: var(--bg-white);
       padding: 1.5rem;
-      border-radius: 8px;
+      border-radius: var(--radius-lg);
       margin-top: 1.5rem;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
     }
 
     .detailed-report h3 {
       margin-bottom: 1rem;
-      color: var(--text-dark);
+      color: var(--primary-color);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .detailed-report h3::before {
+      content: '';
+      display: block;
+      width: 6px;
+      height: 20px;
+      background: var(--primary-color);
+      border-radius: var(--radius-full);
     }
 
     .detailed-report p {
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
       color: var(--text-muted);
+      line-height: 1.7;
     }
 
     .detailed-report .highlight {
       color: var(--primary-color);
-      font-weight: bold;
+      font-weight: 700;
+      background: rgba(67, 1, 19, 0.1);
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
     }
 
     .detailed-report-grid {
@@ -298,41 +501,65 @@
 
     .detailed-report-card {
       background: var(--bg-light);
-      padding: 1rem;
-      border-radius: 8px;
+      padding: 1.5rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      transition: var(--transition);
+    }
+
+    .detailed-report-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-sm);
     }
 
     .detailed-report-card h4 {
-      margin-bottom: 0.5rem;
-      color: var(--text-dark);
+      margin-bottom: 0.75rem;
+      color: var(--primary-color);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(20px);}
-      to {opacity: 1; transform: translateY(0);}
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @media (max-width: 768px) {
       .grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
       }
       
       .date-filters {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+      }
+      
+      .date-filters input,
+      .date-filters button {
+        width: 100%;
       }
       
       .section-header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+        gap: 1rem;
       }
       
       .section-actions {
         width: 100%;
-        justify-content: space-between;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
+      .section-header select,
+      .section-header input,
+      .section-header button {
+        width: 100%;
       }
     }
-  </style>
+</style>
 </head>
 <body>
 
@@ -342,7 +569,7 @@
     </div>
     <div class="topbar-actions">
       <a href="#" onclick="exportAllReports()"><i class="fas fa-file-pdf"></i> Экспорт всех отчетов</a>
-      <a href="index.html"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+      <a href="Аdmin_dashboard.html"><i class="fas fa-sign-out-alt"></i> Назад</a>
     </div>
   </div>
 
@@ -454,61 +681,6 @@
         <div id="topServicesList"></div>
       </div>
     </div>
-
-    <div class="section">
-      <div class="section-header">
-        <h2><i class="fas fa-users"></i> Эффективность сотрудников</h2>
-        <div class="section-actions">
-          <select id="performancePeriod" onchange="renderPerformanceChart()">
-            <option value="month">Месяц</option>
-            <option value="quarter">Квартал</option>
-            <option value="year">Год</option>
-            <option value="all">Все время</option>
-          </select>
-          <button onclick="exportPerformanceReport()"><i class="fas fa-file-export"></i> Экспорт</button>
-        </div>
-      </div>
-      
-      <div class="tabs">
-        <div class="tab active" onclick="switchTab('performanceChart')">График</div>
-        <div class="tab" onclick="switchTab('performanceTable')">Таблица</div>
-        <div class="tab" onclick="switchTab('performanceAnalysis')">Анализ</div>
-      </div>
-      
-      <div class="tab-content active" id="performanceChart">
-        <div class="chart-container">
-          <canvas id="staffPerformanceChart"></canvas>
-        </div>
-      </div>
-
-      <div class="tab-content" id="performanceTable">
-        <div class="report-actions">
-          <button onclick="exportPerformanceTable()"><i class="fas fa-file-excel"></i> Экспорт таблицы</button>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Сотрудник</th>
-              <th>Должность</th>
-              <th>Заказов</th>
-              <th>Сроки (дн.)</th>
-              <th>Выручка</th>
-              <th>Эффективность</th>
-            </tr>
-          </thead>
-          <tbody id="performanceTableBody">
-            <!-- Данные -->
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="tab-content" id="performanceAnalysis">
-        <div class="detailed-report">
-          <h3>Анализ эффективности персонала</h3>
-          <div id="performanceAnalysisContent"></div>
-        </div>
-      </div>
-    </div>
     
     <div class="section">
       <div class="section-header">
@@ -562,33 +734,6 @@
       </table>
     </div>
     
-    <div class="section">
-      <div class="section-header">
-        <h2><i class="fas fa-file-alt"></i> Генерация отчетов</h2>
-      </div>
-      <div class="detailed-report-grid">
-        <div class="detailed-report-card">
-          <h4>Полный отчет</h4>
-          <p>Сгенерируйте полный отчет по всем показателям за выбранный период.</p>
-          <button onclick="generateFullReport()" class="secondary">Создать PDF</button>
-        </div>
-        <div class="detailed-report-card">
-          <h4>Финансовый отчет</h4>
-          <p>Подробный финансовый отчет с графиками и таблицами.</p>
-          <button onclick="generateFinancialReport()" class="secondary">Создать PDF</button>
-        </div>
-        <div class="detailed-report-card">
-          <h4>Отчет по персоналу</h4>
-          <p>Анализ эффективности работы сотрудников.</p>
-          <button onclick="generateStaffReport()" class="secondary">Создать PDF</button>
-        </div>
-        <div class="detailed-report-card">
-          <h4>Отчет по услугам</h4>
-          <p>Популярность услуг и динамика продаж.</p>
-          <button onclick="generateServicesReport()" class="secondary">Создать PDF</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script>
