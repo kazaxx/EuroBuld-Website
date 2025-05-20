@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EuroBuld - Услуги</title>
+    <link rel="icon" href="images/Logo.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/styele.css" />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
@@ -114,19 +115,26 @@
                 service.Item_Name.toLowerCase().includes(query)
             );
             
-            // Применяем текущую сортировку к отфильтрованным результатам
+            displayServices(filteredServices);
+            
+            // Если есть активная сортировка, примените ее к отфильтрованным результатам
             if (currentSort) {
-                applySort(filteredServices, currentSort);
-            } else {
-                displayServices(filteredServices);
+                sortProducts(currentSort);
             }
         }
 
         function sortProducts(sortType) {
             currentSort = sortType;
-            applySort(allServices, sortType);
             
-            // Обновляем активную кнопку сортировки
+            const currentServices = Array.from(document.querySelectorAll('.service-card-custom'))
+                .map(card => {
+                    return allServices.find(service => 
+                        service.Item_Name === card.querySelector('h3').textContent
+                    );
+                });
+            
+            applySort(currentServices.length > 0 ? currentServices : allServices, sortType);
+            
             document.querySelectorAll('.sort-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.textContent.includes(getSortButtonText(sortType))) {

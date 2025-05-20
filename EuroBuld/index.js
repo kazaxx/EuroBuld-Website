@@ -480,23 +480,29 @@ const express = require('express');
   //Выборка таблицы customer_orders в datagrid(админ панель)
   app.get('/api/customer_orders', async (req, res) => {
     try {
-      const result = await app.locals.db.request().query(`
-        SELECT 
-          co.ID_Customers_orders, 
-          u.First_name + ' ' + ISNULL(u.Last_name, '') + ' ' + ISNULL(u.Patronymic, '') AS Client_FullName,
-          s.Item_Name AS Service_Name,
-          co.Order_Date,
-          co.Status
-        FROM Customer_orders co
-        LEFT JOIN Users u ON co.ID_Users = u.ID_Users
-        LEFT JOIN Service s ON co.ID_Service = s.ID_Service
-      `);
-      res.json(result.recordset);
+        const result = await app.locals.db.request().query(`
+            SELECT 
+                co.ID_Customers_orders, 
+                u.First_name + ' ' + ISNULL(u.Last_name, '') + ' ' + ISNULL(u.Patronymic, '') AS Client_FullName,
+                s.Item_Name AS Service_Name,
+                co.Order_Date
+            FROM Customer_orders co
+            LEFT JOIN Users u ON co.ID_Users = u.ID_Users
+            LEFT JOIN Service s ON co.ID_Service = s.ID_Service
+            WHERE NOT EXISTS (
+                SELECT 1 
+                FROM Processed_customer_orders pco 
+                WHERE pco.ID_Customer_orders = co.ID_Customers_orders
+            )
+            AND (co.Status IS NULL OR co.Status != 'Hide')
+            ORDER BY co.Order_Date DESC
+        `);
+        res.json(result.recordset);
     } catch (err) {
-      console.error('Ошибка при получении customer_orders:', err);
-      res.status(500).send('Ошибка сервера');
+        console.error('Ошибка при получении customer_orders:', err);
+        res.status(500).send('Ошибка сервера');
     }
-  });
+});
 
   app.get('/api/processed_customer_orders/:id', async (req, res) => {
     try {
@@ -529,35 +535,6 @@ const express = require('express');
     }
   });
 
-  //Выборка таблицы processed_customer_orders в datagrid(админ панель)
-  app.put('/api/processed_customer_orders/:id', async (req, res) => {
-    const { id } = req.params;
-    const data = req.body;
-
-    try {
-      await app.locals.db.request()
-        .input('ID_Status_Orders', mssql.Int, data.ID_Status_Orders)
-        .input('Date_Start', mssql.Date, data.Date_Start)
-        .input('Date_Ending', mssql.Date, data.Date_Ending || null)
-        .input('Final_sum', mssql.Decimal(10,2), data.Final_sum)
-        .input('id', mssql.Int, id)
-        .query(`
-          UPDATE Processed_customer_orders 
-          SET 
-            ID_Status_Orders = @ID_Status_Orders,
-            Date_Start = @Date_Start,
-            Date_Ending = @Date_Ending,
-            Final_sum = @Final_sum
-          WHERE ID_Processed_customer_orders = @id
-        `);
-
-      res.status(200).json({ message: 'Запись обновлена' });
-    } catch (error) {
-      console.error('Ошибка при обновлении:', error);
-      res.status(500).send('Ошибка сервера');
-    }
-  });
-
   //Выборка таблицы status_Orders в datagrid(админ панель)
   app.get('/api/status_Orders', async (req, res) => {
     try {
@@ -574,29 +551,38 @@ const express = require('express');
 
   //Выборка таблицы processed_customer_orders в datagrid(админ панель)
   app.get('/api/processed_customer_orders', async (req, res) => {
-    try {
-      const result = await app.locals.db.request().query(`
-        SELECT 
-          pco.ID_Processed_customer_orders, 
-          u.First_name + ' ' + ISNULL(u.Last_name, '') + ' ' + ISNULL(u.Patronymic, '') AS Client_FullName,
-          st.First_name + ' ' + ISNULL(st.Last_name, '') + ' ' + ISNULL(st.Patronymic, '') AS Staff_FullName,
-          f.First_Name + ' ' + ISNULL(f.Last_Name, '') + ' ' + ISNULL(f.Patronymic, '') AS Foreman_FullName,
-          so.Name_Status, 
-          pco.Date_Start, 
-          pco.Date_Ending,  
-          pco.Final_sum
-        FROM Processed_customer_orders pco
-        LEFT JOIN Customer_orders co ON pco.ID_Customer_orders = co.ID_Customers_orders
-        LEFT JOIN Users u ON co.ID_Users = u.ID_Users
-        LEFT JOIN Staff st ON pco.ID_Staff = st.ID_Staff
-        LEFT JOIN Foremen f ON pco.ID_Foreman = f.ID_Foreman
-        LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
-      `);
-      res.json(result.recordset);
-    } catch (err) {
-      console.error('Ошибка при получении processed_customer_orders:', err);
-      res.status(500).send('Ошибка сервера');
-    }
+      try {
+          // Проверяем, авторизован ли сотрудник
+          if (!req.session.userId || !req.session.role || req.session.role === 'User') {
+              return res.status(401).json({ error: 'Необходима авторизация сотрудника' });
+          }
+
+          const result = await app.locals.db.request()
+              .input('staffId', mssql.Int, req.session.userId)
+              .query(`
+                  SELECT 
+                      pco.ID_Processed_customer_orders, 
+                      u.First_name + ' ' + ISNULL(u.Last_name, '') + ' ' + ISNULL(u.Patronymic, '') AS Client_FullName,
+                      st.First_name + ' ' + ISNULL(st.Last_name, '') + ' ' + ISNULL(st.Patronymic, '') AS Staff_FullName,
+                      f.First_Name + ' ' + ISNULL(f.Last_Name, '') + ' ' + ISNULL(f.Patronymic, '') AS Foreman_FullName,
+                      so.Name_Status, 
+                      pco.Date_Start, 
+                      pco.Date_Ending,  
+                      pco.Final_sum
+                  FROM Processed_customer_orders pco
+                  LEFT JOIN Customer_orders co ON pco.ID_Customer_orders = co.ID_Customers_orders
+                  LEFT JOIN Users u ON co.ID_Users = u.ID_Users
+                  LEFT JOIN Staff st ON pco.ID_Staff = st.ID_Staff
+                  LEFT JOIN Foremen f ON pco.ID_Foreman = f.ID_Foreman
+                  LEFT JOIN Status_Orders so ON pco.ID_Status_Orders = so.ID_Status_Orders
+                  WHERE pco.ID_Staff = @staffId
+              `);
+          
+          res.json(result.recordset);
+      } catch (err) {
+          console.error('Ошибка при получении processed_customer_orders:', err);
+          res.status(500).send('Ошибка сервера');
+      }
   });
 
   //Выборка таблицы foremen в datagrid(админ панель)
@@ -1056,35 +1042,43 @@ const express = require('express');
   });
 
   app.post('/api/customer_orders', async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).send('Пользователь не авторизован');
-    }
-  
-    const { ID_Service, Order_Date, Status } = req.body;
-    const ID_Users = req.session.userId;
-  
-    if (!ID_Service || !Order_Date || !Status) {
-      return res.status(400).send('Не все обязательные поля заполнены');
-    }
-  
-    try {
-      await app.locals.db.request()
-        .input('ID_Service', mssql.Int, ID_Service)
-        .input('ID_Users', mssql.Int, ID_Users)
-        .input('Order_Date', mssql.Date, Order_Date)
-        .input('Status', mssql.VarChar, Status)
-        .query(`
-          INSERT INTO Customer_orders 
-            (ID_Service, ID_Users, Order_Date, Status)
-          VALUES 
-            (@ID_Service, @ID_Users, @Order_Date, @Status)
-        `);
-  
-      res.status(200).send('Заказ добавлен');
-    } catch (error) {
-      console.error('Ошибка при добавлении заказа:', error);
-      res.status(500).send('Ошибка сервера: ' + error.message);
-    }
+      if (!req.session.userId) {
+          return res.status(401).send('Пользователь не авторизован');
+      }
+      
+      // Проверяем заполненность данных пользователя
+      const userCheck = await app.locals.db.request()
+          .input('userId', mssql.Int, req.session.userId)
+          .query(`
+              SELECT 
+                  CASE WHEN 
+                      Email IS NOT NULL AND
+                      Number_Phone IS NOT NULL AND
+                      Address IS NOT NULL AND
+                      First_name IS NOT NULL AND
+                      Last_name IS NOT NULL AND
+                      Passport_details IS NOT NULL
+                  THEN 1 ELSE 0 END AS isComplete
+              FROM Users
+              WHERE ID_Users = @userId
+          `);
+      
+      if (userCheck.recordset[0]?.isComplete !== 1) {
+          return res.status(400).json({ 
+              error: 'Для оформления заказа необходимо заполнить все данные профиля' 
+          });
+      }
+      
+      // Остальная логика обработки заказа...
+      const { ID_Service, Order_Date, Status } = req.body;
+      const ID_Users = req.session.userId;
+      
+      try {
+          // ... существующий код обработки заказа
+      } catch (error) {
+          console.error('Ошибка при добавлении заказа:', error);
+          res.status(500).send('Ошибка сервера: ' + error.message);
+      }
   });
 
   // Добавляем новый маршрут для получения доступных заказов
@@ -3014,6 +3008,43 @@ const express = require('express');
       }
     });
   }
+
+  // Проверка заполненности данных пользователя
+  app.get('/api/check_user_data_complete/:userId', async (req, res) => {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId) || userId <= 0) {
+          return res.status(400).json({ error: 'Неверный идентификатор пользователя' });
+      }
+      
+      try {
+          const result = await app.locals.db.request()
+              .input('userId', mssql.Int, userId)
+              .query(`
+                  SELECT 
+                      CASE WHEN 
+                          Email IS NOT NULL AND
+                          Password IS NOT NULL AND
+                          Number_Phone IS NOT NULL AND
+                          Address IS NOT NULL AND
+                          First_name IS NOT NULL AND
+                          Last_name IS NOT NULL AND
+                          Passport_details IS NOT NULL
+                      THEN 1 ELSE 0 END AS isComplete
+                  FROM Users
+                  WHERE ID_Users = @userId
+              `);
+          
+          if (result.recordset.length === 0) {
+              return res.status(404).json({ error: 'Пользователь не найден' });
+          }
+          
+          res.json({ isComplete: result.recordset[0].isComplete === 1 });
+      } catch (err) {
+          console.error('Ошибка при проверке данных пользователя:', err);
+          res.status(500).json({ error: 'Ошибка сервера' });
+      }
+  });
 
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);

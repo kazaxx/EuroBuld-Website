@@ -6,6 +6,7 @@
     <title>EuroBuld - Услуга</title>
     <link rel="stylesheet" href="css/styele.css" />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="images/Logo.ico" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -194,48 +195,154 @@
         }
 
         async function buyService(serviceId) {
-        try {
-            const response = await fetch('/api/check_auth', {
-            credentials: 'include'
-            });
-            const authData = await response.json();
-            
-            if (!authData.isAuth) {
-            alert('Пожалуйста, авторизуйтесь для оформления покупки.');
-            return;
+            try {
+                const authCheck = await fetch('/api/check_auth', {
+                    credentials: 'include'
+                });
+                const authData = await authCheck.json();
+                
+                if (!authData.isAuth) {
+                    alert('Пожалуйста, авторизуйтесь для оформления покупки.');
+                    return;
+                }
+
+                const userCheckResponse = await fetch(`/api/check_user_data_complete/${authData.userId}`, {
+                    credentials: 'include'
+                });
+                const userCheckResult = await userCheckResponse.json();
+
+                if (!userCheckResult.isComplete) {
+                    const modal = document.createElement('div');
+                    modal.style.position = 'fixed';
+                    modal.style.top = '0';
+                    modal.style.left = '0';
+                    modal.style.width = '100%';
+                    modal.style.height = '100%';
+                    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                    modal.style.display = 'flex';
+                    modal.style.justifyContent = 'center';
+                    modal.style.alignItems = 'center';
+                    modal.style.zIndex = '1000';
+                    
+                    modal.innerHTML = `
+                        <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);">
+                            <h2 style="margin-top: 0; color: #e74c3c; font-size: 24px; margin-bottom: 20px;">Необходимо заполнить профиль</h2>
+                            <p style="color: #777e90; margin-bottom: 15px;">Для оформления заказа необходимо заполнить все данные профиля:</p>
+                            
+                            <ul style="margin: 20px 0; padding-left: 20px; color: #555;">
+                                <li>ФИО (Имя, Фамилия, Отчество)</li>
+                                <li>Номер телефона</li>
+                                <li>Адрес</li>
+                                <li>Паспортные данные</li>
+                            </ul>
+                            
+                            <p style="color: #777e90; margin-bottom: 20px;">Пожалуйста, перейдите в личный кабинет и заполните недостающие данные.</p>
+                            
+                            <div style="display: flex; justify-content: space-between; margin-top: 25px; gap: 15px;">
+                                <button id="cancelBtn" style="padding: 12px 25px; background: #f4f7fc; color: #430113; border: 2px solid #430113; border-radius: 30px; cursor: pointer; font-weight: 700; transition: all 0.3s ease; flex: 1;">
+                                    Отменить
+                                </button>
+                                <button id="goToProfileBtn" style="padding: 12px 25px; background: #430113; color: white; border: 2px solid #430113; border-radius: 30px; cursor: pointer; font-weight: 700; transition: all 0.3s ease; flex: 1;">
+                                    Перейти в профиль
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(modal);
+                    
+                    document.getElementById('cancelBtn').addEventListener('click', () => {
+                        document.body.removeChild(modal);
+                    });
+                    
+                    document.getElementById('goToProfileBtn').addEventListener('click', () => {
+                        window.location.href = 'personalacount.html';
+                    });
+                    
+                    return;
+                }
+
+                const userResponse = await fetch(`/api/get_user_data`);
+                const userDetails = await userResponse.json();
+                
+                const modal = document.createElement('div');
+                modal.style.position = 'fixed';
+                modal.style.top = '0';
+                modal.style.left = '0';
+                modal.style.width = '100%';
+                modal.style.height = '100%';
+                modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                modal.style.display = 'flex';
+                modal.style.justifyContent = 'center';
+                modal.style.alignItems = 'center';
+                modal.style.zIndex = '1000';
+                
+                modal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);">
+                        <h2 style="margin-top: 0; color: #430113; font-size: 24px; margin-bottom: 20px;">Подтверждение заказа</h2>
+                        <p style="color: #777e90; margin-bottom: 15px;">Пожалуйста, проверьте ваши данные перед оформлением заказа:</p>
+                        
+                        <div style="margin: 20px 0; border: 1px solid #eee; padding: 20px; border-radius: 8px; background-color: #f9f9f9;">
+                            <p style="margin-bottom: 10px;"><strong style="color: #430113;">ФИО:</strong> ${userDetails.Last_name || ''} ${userDetails.First_name || ''} ${userDetails.Patronymic || ''}</p>
+                            <p style="margin-bottom: 10px;"><strong style="color: #430113;">Телефон:</strong> ${userDetails.Number_Phone || 'Не указан'}</p>
+                            <p style="margin-bottom: 10px;"><strong style="color: #430113;">Адрес:</strong> ${userDetails.Address || 'Не указан'}</p>
+                            <p><strong style="color: #430113;">Email:</strong> ${userDetails.Email || 'Не указан'}</p>
+                        </div>
+                        
+                        <p style="color: #e74c3c; font-weight: bold; margin-bottom: 20px; background-color: #ffebee; padding: 10px; border-radius: 5px;">
+                            Внимание! Вы можете оформлять заказы не чаще чем раз в 6 часов.
+                        </p>
+                        
+                        <div style="display: flex; justify-content: space-between; margin-top: 25px; gap: 15px;">
+                            <button id="confirmCancel" style="padding: 12px 25px; background: #f4f7fc; color: #430113; border: 2px solid #430113; border-radius: 30px; cursor: pointer; font-weight: 700; transition: all 0.3s ease; flex: 1;">
+                                Отменить
+                            </button>
+                            <button id="confirmOrder" style="padding: 12px 25px; background: #430113; color: white; border: 2px solid #430113; border-radius: 30px; cursor: pointer; font-weight: 700; transition: all 0.3s ease; flex: 1;">
+                                Подтвердить заказ
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                document.getElementById('confirmCancel').addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                });
+                
+                document.getElementById('confirmOrder').addEventListener('click', async () => {
+                    try {
+                        const response = await fetch('/api/customer_orders', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                ID_Service: serviceId,
+                                ID_Users: authData.userId,
+                                Order_Date: new Date().toISOString().split('T')[0],
+                                Status: 'Pending'
+                            }),
+                            credentials: 'include'
+                        });
+                        
+                        if (response.ok) {
+                            alert('Заказ успешно оформлен! Наш менеджер свяжется с вами в ближайшее время.');
+                            document.body.removeChild(modal);
+                        } else {
+                            const error = await response.text();
+                            alert(`Ошибка: ${error}`);
+                        }
+                    } catch (error) {
+                        console.error('Ошибка при оформлении заказа:', error);
+                        alert('Ошибка при соединении с сервером');
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка при оформлении заказа');
             }
-
-            const userId = authData.userId;
-
-            if (!userId) {
-            alert('Ошибка: Не удалось получить данные пользователя.');
-            return;
-            }
-
-            const orderResponse = await fetch('/api/customer_orders', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-
-            ID_Users: userId,
-            ID_Service: serviceId,
-            Order_Date: new Date().toISOString().split('T')[0],
-            }),
-                  credentials: 'include'
-            });
-
-            if (orderResponse.ok) {
-            alert('Услуга успешно куплена!');
-            } else {
-            const error = await orderResponse.text();
-            alert(`Ошибка: ${error}`);
-            }
-        } catch (error) {
-            console.error('Ошибка при оформлении заказа:', error);
-            alert('Ошибка при соединении с сервером');
-        }
         }
 
         async function fetchRecommendedServices() {
